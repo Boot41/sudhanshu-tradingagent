@@ -1,0 +1,36 @@
+[project]
+name = "trader-agent"
+version = "0.1.0"
+description = "A generative AI agent for stock trading analysis and mock transactions."
+authors = [
+    { name = "Your Name", email = "you@example.com" },
+]
+readme = "README.md"
+requires-python = ">=3.10"
+
+# Core dependencies for the application
+dependencies = [
+    "google-adk[database]==0.3.0",
+    "yfinance==0.2.56",
+    "psutil==5.9.5",
+    "litellm==1.66.3",
+    "google-generativeai==0.8.5",
+    "python-dotenv==1.1.0",
+    "Deprecated>=1.2.14",
+    "vercel-ai"
+    
+]
+
+[project.optional-dependencies]
+# Development dependencies for linting, formatting, and testing
+# Install with: uv pip install -e ".[dev]"
+dev = [
+    "pytest>=8.0",
+    "black>=24.0",
+    "ruff>=0.4",
+]
+
+[build-system]
+# Standard build system configuration
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
