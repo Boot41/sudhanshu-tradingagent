@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from model.model import User
 from schemas.user_schema import UserCreate
-from core.security import get_password_hash, verify_password, create_access_token
+from core.security import get_password_hash, verify_password, create_access_token, blacklist_token
 from fastapi import HTTPException
 
 def create_user(db: Session, user: UserCreate):
@@ -30,3 +30,11 @@ def login_user(db: Session, email: str, password: str):
     
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
+
+def logout_user(db: Session, token: str):
+    """Logout user by blacklisting the token"""
+    try:
+        blacklist_token(db, token)
+        return {"message": "Successfully logged out"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Logout failed")

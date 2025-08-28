@@ -8,6 +8,7 @@ import {
   Send, LogOut, Sparkles 
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/authStore";
 
 interface Message {
   id: string;
@@ -31,6 +32,20 @@ const Playground = () => {
   const [query, setQuery] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const { logout, isAuthenticated } = useAuthStore();
+
+  // Redirect to landing if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
   
   const [agents, setAgents] = useState<Agent[]>([
     {
@@ -444,11 +459,11 @@ const Playground = () => {
           </div>
           <Button
             variant="ghost"
-            onClick={() => navigate("/")}
+            onClick={handleLogout}
             className="text-muted-foreground hover:text-foreground"
           >
             <LogOut className="h-4 w-4 mr-2" />
-            Exit
+            Logout
           </Button>
         </div>
       </header>

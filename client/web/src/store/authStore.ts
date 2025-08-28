@@ -21,7 +21,7 @@ interface AuthState {
     password: string;
     phone: string;
   }) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -115,7 +115,26 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      logout: () => {
+      logout: async () => {
+        const { token } = get();
+        
+        // Call logout API if token exists
+        if (token) {
+          try {
+            await fetch(`${API_BASE_URL}/auth/logout/`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
+          } catch (error) {
+            console.error('Logout API call failed:', error);
+            // Continue with local logout even if API fails
+          }
+        }
+
+        // Clear local state
         set({
           user: null,
           token: null,
