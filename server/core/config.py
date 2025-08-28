@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # ADK Web Server Config
+    ADK_WEB_PORT: int  # Default to 8001 to avoid conflict with FastAPI on 8000
+
     def model_post_init(self, __context: object) -> None:
         # If DATABASE_URL is not supplied, try to construct it from parts
         if not self.DATABASE_URL:

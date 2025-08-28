@@ -1,25 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Brain, TrendingUp, BarChart3, Eye, Filter, Target, ShoppingCart, DollarSign } from "lucide-react";
+import { Brain, TrendingUp, BarChart3, Eye, Filter, Target, ShoppingCart, DollarSign, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-trading.jpg";
 import RegisterForm from "@/components/RegisterForm";
+import { useAuthStore } from "@/store/authStore";
 
 const Landing = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  
+  const { login, isLoading, error, isAuthenticated, clearError } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/playground");
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        clearError();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, clearError]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // Mock login process
-    setTimeout(() => {
+    if (!email || !password) return;
+    
+    const success = await login(email, password);
+    if (success) {
       navigate("/playground");
-    }, 1500);
+    }
   };
 
   return (
@@ -95,6 +115,12 @@ const Landing = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {error && (
+                    <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                      <p className="text-sm text-destructive">{error}</p>
+                    </div>
+                  )}
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
@@ -102,8 +128,11 @@ const Landing = () => {
                         id="email"
                         type="email"
                         placeholder="trader@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                         className="bg-card-glass/50 border-border/20"
+                        disabled={isLoading}
                       />
                     </div>
                     <div className="space-y-2">
@@ -111,15 +140,18 @@ const Landing = () => {
                       <Input
                         id="password"
                         type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         required
                         className="bg-card-glass/50 border-border/20"
+                        disabled={isLoading}
                       />
                     </div>
                     <Button
                       type="submit"
                       variant="hero"
                       className="w-full"
-                      disabled={isLoading}
+                      disabled={isLoading || !email || !password}
                     >
                       {isLoading ? "Connecting..." : "Enter Trading Platform"}
                     </Button>
