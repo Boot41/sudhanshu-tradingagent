@@ -17,7 +17,10 @@ dependencies = [
     "google-generativeai==0.8.5",
     "python-dotenv==1.1.0",
     "Deprecated>=1.2.14",
-    "vercel-ai"
+    "vercel-ai",
+    "fastapi[standard]",
+    "uvicorn[standard]",
+    "groq"
     
 ]
 
