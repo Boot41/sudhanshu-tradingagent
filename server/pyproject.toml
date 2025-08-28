@@ -1,13 +1,12 @@
 [project]
-name = "trader-agent"
+name = "tradingagent"
 version = "0.1.0"
 description = "A generative AI agent for stock trading analysis and mock transactions."
 authors = [
-    { name = "Your Name", email = "you@example.com" },
+    { name = "Sudhanshu", email = "sudhanshu.sinha@think41.com" },
 ]
 readme = "README.md"
 requires-python = ">=3.10"
-
 # Core dependencies for the application
 dependencies = [
     "google-adk[database]==0.3.0",
@@ -20,7 +19,14 @@ dependencies = [
     "vercel-ai",
     "fastapi[standard]",
     "uvicorn[standard]",
-    "groq"
+    "groq",
+    "sqlalchemy",
+    "psycopg2-binary",
+    "alembic",
+    "passlib",
+    "bcrypt",
+    "python-jose[cryptography]",
+    "pydantic-settings"
     
 ]
 
@@ -37,3 +43,6 @@ dev = [
 # Standard build system configuration
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["agent", "screener_agent"]
