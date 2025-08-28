@@ -1,10 +1,10 @@
-"""Screener app: mocked tool and root agent.
+"""Screener agent: stock screening using Google ADK patterns.
 
-Run from parent directory `server/`:
-    adk web screener_agent
+This agent is designed to work as a sub-agent in ADK's multi-agent system.
 """
 
 from typing import List, Dict
+import json
 
 from google.adk.agents import LlmAgent
 
@@ -53,33 +53,42 @@ def screen_stocks(industry: str, top_n: int = 5) -> List[Dict]:
     return results[: max(0, int(top_n))]
 
 
-# Root agent that uses the mocked tool
+# ADK-compliant screener agent
 root_agent = LlmAgent(
     name="screener_agent",
     model="gemini-1.5-flash",
-    description=(
-        "Screens and lists stocks based on user-defined criteria such as industry or performance metrics."
-    ),
-    instruction=
-    """
-    You are a specialized stock screening agent.
-    Your goal is to call the `screen_stocks(industry, top_n)` tool with the best possible
-    arguments inferred from the user's message.
+    description="Specialized stock screening agent that filters and ranks stocks by industry and performance metrics.",
+    instruction="""You are a specialized stock screening agent. Your primary function is to screen stocks based on user criteria.
 
-    Rules:
-    - Infer parameters from free text (e.g., "top 3 tech stock" -> industry=technology, top_n=3).
-    - Map synonyms: tech/it/software -> technology; auto/cars/automobile -> automotive.
-    - If any parameter is missing, ask a short clarifying question. If the user doesn't clarify,
-      pick sensible defaults: industry=technology, top_n=5.
-    - Always call `screen_stocks` to produce the final answer. Do not fabricate data.
-    - Respond concisely with a list of {ticker, name, performance}.
+WORKFLOW:
+1. ALWAYS call screen_stocks() function first - never provide data without calling it
+2. Parse user input to extract:
+   - Industry: technology, automotive, etc.
+   - Count: number of stocks requested (default: 5)
+3. Call screen_stocks(industry=extracted_industry, top_n=extracted_count)
+4. Format the response as JSON within markdown code blocks for proper parsing
 
-    Examples:
-    - User: "top 3 tech stock"
-      Action: screen_stocks(industry="technology", top_n=3)
+INPUT PARSING EXAMPLES:
+- "top 3 tech stocks" → screen_stocks(industry="technology", top_n=3)
+- "best 2 automobile stocks" → screen_stocks(industry="automotive", top_n=2)
+- "5 automotive stocks" → screen_stocks(industry="automotive", top_n=5)
+- "tech stocks" → screen_stocks(industry="technology", top_n=5)
 
-    - User: "screen automotive industry, top 5"
-      Action: screen_stocks(industry="automotive", top_n=5)
-    """,
+SYNONYM MAPPING:
+- tech/it/software/technology → "technology"
+- auto/cars/automobile/automotive → "automotive"
+
+OUTPUT FORMAT:
+Always format your response like this:
+Here are the stocks that match your criteria:
+
+```json
+[{"ticker": "TM", "name": "Tata Motors", "performance": "+5.2%"}, {"ticker": "M&M", "name": "Mahindra & Mahindra", "performance": "+4.8%"}]
+```
+
+I've found X stocks in the Y industry based on your request.""",
     tools=[screen_stocks],
 )
+
+# Export the agent for use in orchestrator
+__all__ = ['root_agent', 'screen_stocks']

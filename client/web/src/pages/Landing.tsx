@@ -17,11 +17,7 @@ const Landing = () => {
   
   const { login, isLoading, error, isAuthenticated, clearError } = useAuthStore();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/playground");
-    }
-  }, [isAuthenticated, navigate]);
+  // Removed auto-redirect to allow users to see landing page even when authenticated
 
   useEffect(() => {
     if (error) {

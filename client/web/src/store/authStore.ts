@@ -55,6 +55,9 @@ export const useAuthStore = create<AuthState>()(
 
           const data = await response.json();
           
+          // Store token in localStorage
+          localStorage.setItem('access_token', data.access_token);
+          
           set({
             token: data.access_token,
             isAuthenticated: true,
@@ -64,6 +67,8 @@ export const useAuthStore = create<AuthState>()(
 
           return true;
         } catch (error) {
+          // Clear localStorage on login failure
+          localStorage.removeItem('access_token');
           set({
             isLoading: false,
             error: error instanceof Error ? error.message : 'Login failed',
@@ -134,6 +139,9 @@ export const useAuthStore = create<AuthState>()(
           }
         }
 
+        // Clear localStorage
+        localStorage.removeItem('access_token');
+
         // Clear local state
         set({
           user: null,
@@ -154,6 +162,19 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        // After rehydration, sync with localStorage and set authentication state
+        const storedToken = localStorage.getItem('access_token');
+        if (storedToken && state) {
+          state.token = storedToken;
+          state.isAuthenticated = true;
+        } else if (state) {
+          // Clear state if no token in localStorage
+          state.token = null;
+          state.isAuthenticated = false;
+          localStorage.removeItem('access_token');
+        }
+      },
     }
   )
 );

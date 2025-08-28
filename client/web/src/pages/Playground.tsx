@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ChatMessage, VisualizerResponse, ScreenerResponse, RecommenderResponse, TradingResponse } from "@/components/ChatMessage";
 import { AgentSidebar } from "@/components/AgentSidebar";
 import { 
   Brain, Eye, Filter, Target, ShoppingCart, DollarSign, 
-  Send, LogOut, Sparkles 
+  Send, LogOut, Sparkles, ArrowRight 
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
@@ -33,14 +35,7 @@ const Playground = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const { logout, isAuthenticated } = useAuthStore();
-
-  // Redirect to landing if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/");
-    }
-  }, [isAuthenticated, navigate]);
+  const { logout } = useAuthStore();
 
   const handleLogout = async () => {
     await logout();
@@ -115,7 +110,7 @@ const Playground = () => {
     if (!query.trim() || isTyping) return;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type: "user",
       content: query,
       timestamp: new Date().toLocaleTimeString()
@@ -138,77 +133,135 @@ const Playground = () => {
     }, 1000);
   };
 
-  const processUserQuery = (userQuery: string) => {
-    const queryLower = userQuery.toLowerCase();
-
-    if (queryLower.includes("plot") || queryLower.includes("graph") || queryLower.includes("chart") || queryLower.includes("visualize")) {
-      startVisualizationWorkflow(userQuery);
-    } else if (queryLower.includes("screen") || queryLower.includes("filter") || queryLower.includes("top")) {
-      startScreeningWorkflow(userQuery);
-    } else if (queryLower.includes("recommend") || queryLower.includes("analysis") || queryLower.includes("buy") || queryLower.includes("sell")) {
-      if (queryLower.includes("buy") || queryLower.includes("sell")) {
-        startDirectTradingWorkflow(userQuery);
-      } else {
-        startRecommendationWorkflow(userQuery);
+  const processUserQuery = async (userQuery: string) => {
+    try {
+      // Get token from auth store or localStorage
+      const { token: storeToken } = useAuthStore.getState();
+      const token = storeToken || localStorage.getItem('access_token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
       }
-    } else {
-      // General orchestrator response
+
+      const response = await fetch('http://localhost:8000/api/chat/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          message: userQuery
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API call failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Determine which agent responded based on agent_name
+      const agentId = getAgentIdFromName(data.agent_name);
+      
+      // Update agent status to processing first
+      setAgents(prev => prev.map(agent => 
+        agent.id === agentId 
+          ? { ...agent, status: "processing" }
+          : agent.id === "orchestrator" && agentId !== "orchestrator"
+          ? { ...agent, status: "completed" }
+          : agent
+      ));
+
+      // Create response message with structured data if available
       const agentMessage: Message = {
-        id: Date.now().toString(),
+        id: `agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: "agent",
-        content: "I can help you with several tasks. Here are some examples of what you can ask:",
-        agentName: "Orchestrator Agent",
-        interactive: (
-          <div className="grid grid-cols-1 gap-2 mt-3">
-            <Button 
-              size="sm" 
-              variant="secondary" 
-              onClick={() => processUserQuery("plot tata motors performance")}
-              className="justify-start text-left"
-            >
-              📊 "Plot Tata Motors performance chart"
-            </Button>
-            <Button 
-              size="sm" 
-              variant="secondary" 
-              onClick={() => processUserQuery("screen top 5 IT stocks")}
-              className="justify-start text-left"
-            >
-              🔍 "Screen top 5 IT sector stocks"
-            </Button>
-            <Button 
-              size="sm" 
-              variant="secondary" 
-              onClick={() => processUserQuery("recommend HDFC bank")}
-              className="justify-start text-left"
-            >
-              🎯 "Give me recommendations for HDFC"
-            </Button>
-            <Button 
-              size="sm" 
-              variant="secondary" 
-              onClick={() => processUserQuery("buy RELIANCE shares")}
-              className="justify-start text-left"
-            >
-              💰 "Buy RELIANCE shares"
-            </Button>
-          </div>
-        ),
+        content: data.message,
+        agentName: data.agent_name,
+        interactive: data.data ? createInteractiveComponent(data.data, data.agent_name) : undefined,
         timestamp: new Date().toLocaleTimeString()
       };
 
       setMessages(prev => [...prev, agentMessage]);
-    }
+      
+      // Update agent status to completed
+      setAgents(prev => prev.map(agent => 
+        agent.id === agentId 
+          ? { ...agent, status: "completed" }
+          : agent
+      ));
+      
+    } catch (error) {
+      console.error('Error calling API:', error);
+      
+      // Fallback to showing an error message
+      const errorMessage: Message = {
+        id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: "agent",
+        content: "I'm having trouble processing your request right now. Please try again later.",
+        agentName: "System",
+        timestamp: new Date().toLocaleTimeString()
+      };
 
-    // Reset orchestrator status
-    setAgents(prev => prev.map(agent => 
-      agent.id === "orchestrator" 
-        ? { ...agent, status: "completed" }
-        : agent
-    ));
+      setMessages(prev => [...prev, errorMessage]);
+      
+      // Reset orchestrator status
+      setAgents(prev => prev.map(agent => 
+        agent.id === "orchestrator" 
+          ? { ...agent, status: "completed" }
+          : agent
+      ));
+    }
     
     setIsTyping(false);
   };
+
+  const getAgentIdFromName = (agentName: string): string => {
+    if (agentName.toLowerCase().includes('screener')) return 'screener';
+    if (agentName.toLowerCase().includes('visualizer')) return 'visualizer';
+    if (agentName.toLowerCase().includes('recommender')) return 'recommender';
+    if (agentName.toLowerCase().includes('buy')) return 'buy';
+    if (agentName.toLowerCase().includes('sell')) return 'sell';
+    return 'orchestrator';
+  };
+
+  const createInteractiveComponent = (stockData: any[], agentName: string) => {
+    if (agentName.toLowerCase().includes('screener') && stockData) {
+      return <ScreenerResponseWithData stockData={stockData} onNext={() => triggerRecommender()} />;
+    }
+    // Add other interactive components as needed
+    return null;
+  };
+
+  // Custom ScreenerResponse component that uses actual API data
+  const ScreenerResponseWithData = ({ stockData, onNext }: { stockData: any[], onNext: () => void }) => (
+    <Card className="bg-card-glass/50 border border-accent/20">
+      <CardContent className="p-4 space-y-3">
+        <p className="text-sm font-medium">Screened Stocks</p>
+        <div className="space-y-2">
+          {stockData.map((stock, i) => (
+            <div key={stock.ticker || i} className="flex justify-between items-center p-3 rounded bg-card-glass/30 border border-border/10">
+              <div>
+                <span className="text-sm font-medium">{stock.ticker} - {stock.name}</span>
+                <p className="text-xs text-muted-foreground">Performance: {stock.performance}</p>
+              </div>
+              <Badge variant={i < 2 ? "default" : "secondary"}>
+                {stock.performance}
+              </Badge>
+            </div>
+          ))}
+        </div>
+        <Button 
+          size="sm" 
+          variant="secondary"
+          onClick={onNext}
+          className="w-full"
+        >
+          Get Buy/Sell Recommendations <ArrowRight className="h-4 w-4 ml-1" />
+        </Button>
+      </CardContent>
+    </Card>
+  );
 
   const startVisualizationWorkflow = (query: string) => {
     // Activate visualizer

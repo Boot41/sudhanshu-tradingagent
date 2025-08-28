@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import auth
+from api import auth, chat
 from db.db import create_tables, test_connection
 
 app = FastAPI(
@@ -26,6 +26,7 @@ async def startup_event():
     create_tables()
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 @app.get("/")
 def read_root():
