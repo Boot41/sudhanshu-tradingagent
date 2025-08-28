@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Brain, TrendingUp, BarChart3, Eye, Filter, Target, ShoppingCart, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-trading.jpg";
+import RegisterForm from "@/components/RegisterForm";
 
 const Landing = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -77,51 +79,62 @@ const Landing = () => {
             </div>
           </div>
 
-          {/* Login Form */}
-          <div className="animate-slide-in-right">
-            <Card className="bg-card-glass/80 backdrop-blur-sm border border-border/20 shadow-glass">
-              <CardHeader className="text-center space-y-2">
-                <div className="mx-auto p-3 rounded-full bg-primary/10">
-                  <BarChart3 className="h-8 w-8 text-primary" />
-                </div>
-                <CardTitle className="text-2xl">Welcome Back</CardTitle>
-                <CardDescription>
-                  Access your AI trading dashboard
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="trader@example.com"
-                      required
-                      className="bg-card-glass/50 border-border/20"
-                    />
+          {/* Login/Register Form */}
+          {showRegister ? (
+            <RegisterForm onLoginClick={() => setShowRegister(false)} />
+          ) : (
+            <div className="animate-slide-in-right">
+              <Card className="bg-card-glass/80 backdrop-blur-sm border border-border/20 shadow-glass">
+                <CardHeader className="text-center space-y-2">
+                  <div className="mx-auto p-3 rounded-full bg-primary/10">
+                    <BarChart3 className="h-8 w-8 text-primary" />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      className="bg-card-glass/50 border-border/20"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    variant="hero"
-                    className="w-full"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Connecting..." : "Enter Trading Platform"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+                  <CardTitle className="text-2xl">Welcome Back</CardTitle>
+                  <CardDescription>
+                    Access your AI trading dashboard
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="trader@example.com"
+                        required
+                        className="bg-card-glass/50 border-border/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        required
+                        className="bg-card-glass/50 border-border/20"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      variant="hero"
+                      className="w-full"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Connecting..." : "Enter Trading Platform"}
+                    </Button>
+                  </form>
+                  <p className="text-center text-sm text-muted-foreground mt-4">
+                    Don't have an account?{" "}
+                    <Button variant="link" className="p-0 h-auto text-primary" onClick={() => setShowRegister(true)}>
+                      Sign Up
+                    </Button>
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
         </div>
       </div>
     </div>
