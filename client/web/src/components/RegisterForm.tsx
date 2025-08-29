@@ -22,11 +22,7 @@ const RegisterForm = ({ onLoginClick }: RegisterFormProps) => {
   const navigate = useNavigate();
   const { register, isLoading, error, isAuthenticated, clearError } = useAuthStore();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/playground");
-    }
-  }, [isAuthenticated, navigate]);
+  // Removed auto-redirect on authentication to allow registration form to be shown
 
   useEffect(() => {
     if (error) {

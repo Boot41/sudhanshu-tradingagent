@@ -313,7 +313,7 @@ For questions, issues, or contributions:
 - **Email**: sudhanshu.sinha@think41.com
 - **Project Issues**: [GitHub Issues](link-to-issues)
 
-## 🗺️ Roadmap
+## 🗺️ Future Scalability Prospects
 
 - [ ] Real-time market data streaming
 - [ ] Advanced technical indicators
