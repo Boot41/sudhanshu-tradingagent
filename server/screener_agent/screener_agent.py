@@ -5,6 +5,7 @@ This agent is designed to work as a sub-agent in ADK's multi-agent system.
 
 from typing import List, Dict
 import json
+import yfinance as yf
 
 from google.adk.agents import LlmAgent
 
