@@ -44,6 +44,9 @@ class Settings(BaseSettings):
 
     # ADK Web Server Config
     ADK_WEB_PORT: int  # Default to 8001 to avoid conflict with FastAPI on 8000
+    
+    # MCP Server Config
+    MCP_SERVER_URL: str = "http://localhost:8000/mcp"  # Default MCP server endpoint
 
     def model_post_init(self, __context: object) -> None:
         # If DATABASE_URL is not supplied, try to construct it from parts
