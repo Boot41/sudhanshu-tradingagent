@@ -43,10 +43,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # ADK Web Server Config
-    ADK_WEB_PORT: int  # Default to 8001 to avoid conflict with FastAPI on 8000
+    ADK_WEB_PORT: int = 8001  # Default to 8001 to avoid conflict with FastAPI on 8000
     
     # MCP Server Config
-    MCP_SERVER_URL: str = "http://localhost:8000/mcp"  # Default MCP server endpoint
+    MCP_SERVER_URL: str = "http://localhost:8000/mcp"  # MCP server mounted on FastAPI app
 
     def model_post_init(self, __context: object) -> None:
         # If DATABASE_URL is not supplied, try to construct it from parts

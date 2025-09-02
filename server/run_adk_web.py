@@ -21,9 +21,9 @@ def main():
     print("This avoids conflicts with FastAPI server on port 8000")
     print("-" * 50)
     
-    # Run the adk web command
+    # Run the adk web command with port specification
     try:
-        subprocess.run(['adk', 'web', 'screener_agent'], check=True)
+        subprocess.run(['adk', 'web', '--port', str(settings.ADK_WEB_PORT), 'agent'], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error running ADK web server: {e}")
         sys.exit(1)

@@ -5,12 +5,18 @@ specialized in providing trading recommendations based on technical analysis.
 """
 
 from google.adk.agents import LlmAgent
-from google.adk.tools.mcp import MCPToolset
-from google.adk.tools.mcp.client import SseServerParams
-from ..core.config import settings
+#from google.adk.tools import ToolCodeInterpreter
+from google.adk.tools import MCPToolset
+from google.adk.tools.mcp_tool import SseConnectionParams
+from core.config import settings
 import json
 import re
+import logging
 from typing import Optional
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def extract_ticker_from_input(user_input: str) -> Optional[str]:
@@ -44,24 +50,40 @@ def extract_ticker_from_input(user_input: str) -> Optional[str]:
 
 # Create MCP toolset by connecting to the MCP server
 # This toolset will lazy-load the available tools (get_technical_indicators, etc.)
-mcp_tools = MCPToolset(connection_params=SseServerParams(url=settings.MCP_SERVER_URL))
+try:
+    logger.info(f"RecommendationAgent: Connecting to MCP server at {settings.MCP_SERVER_URL}")
+    mcp_tools = MCPToolset(connection_params=SseConnectionParams(url=settings.MCP_SERVER_URL))
+    logger.info("RecommendationAgent: Successfully created MCP toolset")
+    
+    # Test MCP connection by listing tools
+    try:
+        logger.info("RecommendationAgent: Testing MCP connection by listing tools...")
+        # Note: This might not work immediately, but we'll log it
+        logger.info("RecommendationAgent: MCP toolset created, tools will be lazy-loaded on first use")
+    except Exception as test_e:
+        logger.warning(f"RecommendationAgent: Could not test MCP connection immediately: {test_e}")
+        
+except Exception as e:
+    logger.error(f"RecommendationAgent: Failed to create MCP toolset: {e}")
+    raise e
 
 # Define the Recommendation Agent
-root_agent = LlmAgent(
+recommendation_agent = LlmAgent(
     name="recommendation_agent",
     model="gemini-1.5-flash",
     # The description is vital for the orchestrator to decide when to delegate to this agent
     description="Specialized agent for providing buy, sell, or hold recommendations for stocks based on technical analysis. Use this agent when users ask for trading advice or stock recommendations.",
     # Provide the agent with the MCP tools it's allowed to use
     tools=[mcp_tools],
+    #enable_function_calling=True,  # Enable function call execution
+    #tool_code_interpreter=ToolCodeInterpreter(),
     # The instruction prompt guides the agent's behavior
-    instruction="""You are a professional technical analyst providing clear, actionable trading signals and recommendations.
+    instruction="""You are a technical analyst that returns JSON data for stock recommendations.
 
 WORKFLOW:
 1. Extract the stock ticker from the user's request (e.g., "should I buy AAPL?" → extract "AAPL")
 2. Use the 'get_technical_indicators' tool to fetch technical analysis data for the specified ticker
-3. Parse the returned JSON data which includes signal, RSI, moving averages, and other indicators
-4. Formulate a clear, human-readable response with the main recommendation and supporting analysis
+3. Return the data as JSON format
 
 EXTRACTION RULES:
 - Look for stock tickers (2-5 uppercase letters) in phrases like:
@@ -69,46 +91,30 @@ EXTRACTION RULES:
   * "TSLA recommendation"
   * "What's your signal on MSFT?"
   * "Hold or sell GOOGL?"
-- If no ticker is found, ask the user to specify the stock symbol
+- If no ticker is found, return {"error": "Please specify a stock ticker symbol"}
 
 RESPONSE FORMAT:
-1. Start with a clear signal: "STRONG BUY signal for [TICKER]" or "HOLD signal for [TICKER]" etc.
-2. Provide key supporting data:
-   - Current RSI level and interpretation
-   - Moving average analysis (50-day, 200-day)
-   - Any other relevant technical indicators
-   - Brief rationale for the recommendation
-3. Include appropriate risk disclaimer
+Always return a valid JSON object with the following structure:
+{
+  "ticker": "AAPL",
+  "signal": "BUY",
+  "last_close": 150.25,
+  "rsi": 45.2,
+  "ma50": 148.5,
+  "ma200": 145.0,
+  "analysis": "Technical indicators show bullish momentum"
+}
 
-SIGNAL INTERPRETATION:
-- STRONG BUY: Multiple bullish indicators align
-- BUY: Generally positive technical setup
-- HOLD: Mixed signals or neutral technical picture
-- SELL: Generally negative technical setup  
-- STRONG SELL: Multiple bearish indicators align
+If there's an error, return:
+{
+  "error": "Error message here"
+}
 
-TECHNICAL INDICATORS GUIDANCE:
-- RSI > 70: Potentially overbought (bearish)
-- RSI < 30: Potentially oversold (bullish)
-- RSI 30-70: Neutral zone
-- Price above 50-day MA: Short-term bullish
-- Price above 200-day MA: Long-term bullish
-- Golden Cross (50-day > 200-day): Very bullish
-- Death Cross (50-day < 200-day): Very bearish
+IMPORTANT: Your response must be ONLY valid JSON. Do not include any other text, explanations, or formatting.
 
-ERROR HANDLING:
-- If ticker extraction fails, ask user to specify the stock symbol
-- If technical data is unavailable, explain the limitation
-- Handle API errors gracefully with helpful messages
-
-RISK DISCLAIMER:
-Always include: "This is not financial advice. Please do your own research and consider your risk tolerance before making investment decisions."
-
-EXAMPLE RESPONSES:
-- "STRONG BUY signal for AAPL. RSI at 45 shows healthy momentum, price is above both 50-day ($150) and 200-day ($140) moving averages indicating strong uptrend. Recent golden cross formation supports bullish outlook."
-- "HOLD signal for TSLA. Mixed technical picture with RSI at 65 approaching overbought territory, though price remains above key moving averages. Wait for clearer directional signals."
+DEBUG: Always log when you start processing a request and when you call MCP tools.
 """
 )
 
 # Export the agent for use in orchestrator
-__all__ = ['root_agent', 'extract_ticker_from_input']
+__all__ = ['recommendation_agent', 'extract_ticker_from_input']
