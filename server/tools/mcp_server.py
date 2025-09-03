@@ -190,7 +190,11 @@ def initialize_mcp_server(main_app: FastAPI) -> None:
             """Handle MCP requests via HTTP."""
             
             # Handle SSE connection for Google ADK
-            if request.headers.get("accept") == "text/event-stream":
+            #if request.headers.get("accept") == "text/event-stream":
+            # Handle SSE connection for Google ADK (accept variations)
+            accept = (request.headers.get("accept") or "").lower()
+            if "text/event-stream" in accept:
+
                 async def event_stream():
                     try:
                         # Send server capabilities immediately

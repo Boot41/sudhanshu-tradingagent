@@ -2,6 +2,8 @@ from google.adk.agents import LlmAgent
 from google.adk.tools import agent_tool
 import logging
 
+from agent.dummy import dummy_agent
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -16,6 +18,7 @@ from .recommendation_agent import recommendation_agent
 agent_tools = [
     agent_tool.AgentTool(agent=visualizer_agent),
     agent_tool.AgentTool(agent=recommendation_agent),
+    agent_tool.AgentTool(agent=dummy_agent),
 ]
 
 # Define the Coordinator Agent
@@ -25,6 +28,8 @@ coordinator_agent = LlmAgent(
     description="I am the master stock trading assistant. I understand a user's request and delegate the task to the correct specialist agent from my team.",
     # The coordinator's tools are the other agents.
     tools=agent_tools,
+    sub_agents=[visualizer_agent, recommendation_agent,dummy_agent],
+
     instruction="""
     You are the central coordinator for a team of specialist financial AI agents.
     Your job is to understand the user's prompt and either respond directly for simple greetings or delegate to the appropriate specialist agent.
@@ -35,6 +40,7 @@ coordinator_agent = LlmAgent(
         *   If the prompt is a simple greeting (e.g., "hi", "hello"), respond with a friendly message introducing yourself as a trading assistant.
         *   If the prompt is a request for a chart, graph, or plot, delegate to the `visualizer_agent`.
         *   If the prompt is a request for a recommendation (buy/sell/hold), delegate to the `recommendation_agent`.
+        *   If the prompt is a request for a dummy get technical indicator, delegate to the `dummy_agent`.
     3.  **Handle Specialist Agent Output:**
         *   After calling a specialist agent, it will return a JSON object.
         *   Your task is to **immediately return the full and exact JSON output** from the specialist agent.

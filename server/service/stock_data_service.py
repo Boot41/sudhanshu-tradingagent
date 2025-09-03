@@ -8,9 +8,8 @@ import pandas_ta as ta
 import time
 import random
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from functools import lru_cache
-
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -96,7 +95,7 @@ def get_historical_data(ticker: str, period: str = "3mo", interval: str = "1d") 
 
 def _get_mock_technical_indicators(ticker: str) -> Dict[str, Any]:
     """Generate mock technical indicators when API is unavailable."""
-    base_price = {"AAPL": 150, "MSFT": 300, "GOOGL": 2500, "TSLA": 200, "AMZN": 3000}.get(ticker, 100)
+    base_price = {"AAPL": 250, "MSFT": 300, "GOOGL": 2500, "TSLA": 200, "AMZN": 3000}.get(ticker, 100)
     
     # Generate realistic mock values
     last_close = base_price + random.uniform(-5, 5)
@@ -110,7 +109,7 @@ def _get_mock_technical_indicators(ticker: str) -> Dict[str, Any]:
         signal = "BUY"
     elif last_close < ma50 and rsi > 30:
         signal = "SELL"
-    
+    logger.debug(f"ticker: {ticker}, signal: {signal}, rsi: {rsi}, ma50: {ma50}, ma200: {ma200}")
     return {
         "ticker": ticker,
         "last_close": round(last_close, 2),
@@ -122,7 +121,8 @@ def _get_mock_technical_indicators(ticker: str) -> Dict[str, Any]:
     }
 
 @lru_cache(maxsize=100)
-def get_technical_indicators(ticker: str, period: str = "1y", indicators: list = None) -> dict:
+
+def get_technical_indicators(ticker: str, period: str = "1y", indicators: Optional[str] = None) -> Dict[str, Any]:
     """
     Get technical indicators for a stock.
     
@@ -135,11 +135,11 @@ def get_technical_indicators(ticker: str, period: str = "1y", indicators: list =
         Dictionary containing technical indicators
     """
     try:
-        logger.info(f"📊 StockDataService: ===== TECHNICAL INDICATORS REQUEST =====")
-        logger.info(f"📊 StockDataService: Ticker: {ticker}")
-        logger.info(f"📊 StockDataService: Period: {period}")
-        logger.info(f"📊 StockDataService: Indicators: {indicators}")
-        logger.info(f"📊 StockDataService: Starting data fetch...")
+        logger.debug(f"📊 StockDataService: ===== TECHNICAL INDICATORS REQUEST =====")
+        logger.debug(f"📊 StockDataService: Ticker: {ticker}")
+        logger.debug(f"📊 StockDataService: Period: {period}")
+        logger.debug(f"📊 StockDataService: Indicators: {indicators}")
+        logger.debug(f"📊 StockDataService: Starting data fetch...")
         if indicators is None:
             indicators = ("sma", "rsi")
         elif isinstance(indicators, list):
