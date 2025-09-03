@@ -33,8 +33,8 @@ coordinator_agent = LlmAgent(
     1.  **Analyze the user's prompt.**
     2.  **Decision Point:**
         *   If the prompt is a simple greeting (e.g., "hi", "hello"), respond with a friendly message introducing yourself as a trading assistant.
-        *   If the prompt is a request for a chart, graph, or plot, delegate to the `VisualizerAgent`.
-        *   If the prompt is a request for a recommendation (buy/sell/hold), delegate to the `RecommendationAgent`.
+        *   If the prompt is a request for a chart, graph, or plot, delegate to the `visualizer_agent`.
+        *   If the prompt is a request for a recommendation (buy/sell/hold), delegate to the `recommendation_agent`.
     3.  **Handle Specialist Agent Output:**
         *   After calling a specialist agent, it will return a JSON object.
         *   Your task is to **immediately return the full and exact JSON output** from the specialist agent.

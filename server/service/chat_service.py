@@ -25,7 +25,9 @@ class ChatService:
         if not session_id:
             session_id = str(uuid.uuid4())
 
-        # TODO: Integrate with the new coordinator agent
+        # TODO: Integrate with the new coordinator 
+        #const response =await coordinator_agent.run(message)
+        logger.info(response)
         return ChatResponse(
             message="This is a placeholder response. Chat functionality with the new agent architecture is pending.",
             agent_name="System",
