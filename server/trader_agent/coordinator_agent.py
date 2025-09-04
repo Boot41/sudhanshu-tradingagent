@@ -743,3 +743,5 @@ CoordinatorAgent = LlmAgent(
         Tool(name="generate_audit_trail", func=generate_audit_trail)
     ]
 )
+
+root_agent = CoordinatorAgent
