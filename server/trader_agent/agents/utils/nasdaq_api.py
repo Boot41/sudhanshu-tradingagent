@@ -44,22 +44,39 @@ def _default_date_range(months: int = 3) -> tuple[str, str]:
 def _parse_period_to_months(period: str) -> int:
     """
     Parse period string to number of months.
+    
+    Args:
+        period: Period string like "1mo", "3mo", "6mo", "1y", "2y"
+        
+    Returns:
+        Number of months as integer
     """
+    if not period or not isinstance(period, str):
+        logger.warning(f"Invalid period type: {type(period)}, defaulting to 3 months")
+        return 3
+        
     period = period.lower().strip()
     
-    if period.endswith('mo'):
-        return int(period[:-2])
-    elif period.endswith('m'):
-        return int(period[:-1])
-    elif period.endswith('y'):
-        return int(period[:-1]) * 12
-    elif period.endswith('d'):
-        # Convert days to approximate months
-        days = int(period[:-1])
-        return max(1, days // 30)
-    else:
-        logger.warning(f"Unknown period format: {period}, defaulting to 3 months")
+    try:
+        if period.endswith('mo'):
+            return int(period[:-2])
+        elif period.endswith('m'):
+            return int(period[:-1])
+        elif period.endswith('y'):
+            return int(period[:-1]) * 12
+        elif period.endswith('d'):
+            # Convert days to approximate months
+            days = int(period[:-1])
+            return max(1, days // 30)
+        else:
+            # Default fallback for any unrecognized format
+            logger.warning(f"Unknown period format: {period}, defaulting to 3 months")
+            return 3
+    except (ValueError, IndexError) as e:
+        # Handle any parsing errors gracefully
+        logger.warning(f"Failed to parse period '{period}': {e}. Using default 3 months")
         return 3
+
 
 # --- Normalization functions for deprecated endpoints ---
 
