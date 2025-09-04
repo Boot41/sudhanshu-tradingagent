@@ -1,0 +1,53 @@
+{
+  "timestamp": 1756983199.254989,
+  "data": {
+    "datatable": {
+      "data": [],
+      "columns": [
+        {
+          "name": "ticker",
+          "type": "text"
+        },
+        {
+          "name": "date",
+          "type": "Date"
+        },
+        {
+          "name": "open",
+          "type": "double"
+        },
+        {
+          "name": "high",
+          "type": "double"
+        },
+        {
+          "name": "low",
+          "type": "double"
+        },
+        {
+          "name": "close",
+          "type": "double"
+        },
+        {
+          "name": "volume",
+          "type": "double"
+        },
+        {
+          "name": "closeadj",
+          "type": "double"
+        },
+        {
+          "name": "closeunadj",
+          "type": "double"
+        },
+        {
+          "name": "lastupdated",
+          "type": "Date"
+        }
+      ]
+    },
+    "meta": {
+      "next_cursor_id": null
+    }
+  }
+}
