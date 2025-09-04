@@ -12,10 +12,11 @@ Agents can call these functions directly without handling URLs or HTTP details.
 import logging
 import os
 from datetime import date, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 import pandas as pd
 import yfinance as yf
 from curl_cffi import requests as curl_requests
+import re
 
 # http_client is still needed for the other (deprecated) functions
 from http_client import get_json, DEFAULT_HEADERS
@@ -76,6 +77,102 @@ def _parse_period_to_months(period: str) -> int:
         # Handle any parsing errors gracefully
         logger.warning(f"Failed to parse period '{period}': {e}. Using default 3 months")
         return 3
+
+
+def resolve_ticker(company_name: str, use_cache: bool = True) -> Optional[str]:
+    """
+    Convert a company name to its official ticker symbol using yfinance search
+    with a session that impersonates a browser to avoid rate limiting.
+    
+    Args:
+        company_name: Company name to search for (e.g., "Apple Inc", "Microsoft")
+        use_cache: Whether to use HTTP caching for the search request
+        
+    Returns:
+        Official ticker symbol (e.g., "AAPL", "MSFT") or None if not found
+    """
+    if not company_name or not isinstance(company_name, str):
+        logger.error(f"Invalid company name provided: {company_name}")
+        return None
+    
+    company_name = company_name.strip()
+    logger.info(f"Resolving ticker for company: {company_name}")
+    
+    try:
+        # Create a session object that impersonates a Chrome browser (same as get_historical_data)
+        session = curl_requests.Session(impersonate="chrome")
+        
+        # Yahoo Finance search API endpoint
+        search_url = "https://query1.finance.yahoo.com/v1/finance/search"
+        params = {
+            'q': company_name,
+            'quotesCount': 5,  # Limit results to top 5 matches
+            'newsCount': 0,    # We don't need news results
+            'enableFuzzyQuery': 'false',
+            'quotesQueryId': 'tss_match_phrase_query'
+            }
+        
+        # Additional headers to look more like a real browser
+        headers = {
+            "accept": "application/json",
+            "accept-language": "en-US,en;q=0.9",
+            "accept-encoding": "gzip, deflate, br",
+            "referer": "https://finance.yahoo.com/",
+            "origin": "https://finance.yahoo.com"
+            }
+        
+        # Make request using the browser-impersonating session
+        response = session.get(search_url, params=params, headers=headers, timeout=15)
+        response.raise_for_status()
+        
+        response_data = response.json()
+        
+        if not response_data:
+            logger.error(f"Failed to get search results for: {company_name}")
+            return None
+        
+        # Parse the search results
+        quotes = response_data.get('quotes', [])
+        if not quotes:
+            logger.warning(f"No search results found for: {company_name}")
+            return None
+        
+        # Find the best match - prioritize exact matches and stocks
+        best_match = None
+        company_lower = company_name.lower()
+        
+        for quote in quotes:
+            symbol = quote.get('symbol', '')
+            long_name = quote.get('longname', '')
+            short_name = quote.get('shortname', '')
+            quote_type = quote.get('quoteType', '')
+            
+            # Skip non-equity instruments
+            if quote_type not in ['EQUITY', 'ETF']:
+                continue
+            
+            # Check for exact matches in company names
+            if (long_name and company_lower in long_name.lower()) or \
+            (short_name and company_lower in short_name.lower()):
+                best_match = symbol
+                break
+            
+            # If no exact match yet, keep the first equity result as fallback
+            if not best_match and symbol:
+                best_match = symbol
+        
+        if best_match:
+            logger.info(f"Successfully resolved '{company_name}' to ticker: {best_match}")
+            return best_match.upper()
+        else:
+            logger.warning(f"Could not resolve ticker for: {company_name}")
+            return None
+        
+    except Exception as e:
+        logger.error(f"Error resolving ticker for '{company_name}': {e}")
+        return None
+
+
 
 
 # --- Normalization functions for deprecated endpoints ---
