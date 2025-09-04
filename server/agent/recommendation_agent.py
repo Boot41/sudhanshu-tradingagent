@@ -1,18 +1,16 @@
-"""Recommendation agent: stock buy/sell/hold recommendations using Google ADK and MCP tools.
+"""Recommendation agent: stock buy/sell/hold recommendations using direct tool calls.
 
 This agent is designed to work as a sub-agent in ADK's multi-agent system,
 specialized in providing trading recommendations based on technical analysis.
 """
 
 from google.adk.agents import LlmAgent
-#from google.adk.tools import ToolCodeInterpreter
-from google.adk.tools import MCPToolset
-from google.adk.tools.mcp_tool import SseConnectionParams
-from core.config import settings
-import json
 import re
 import logging
 from typing import Optional
+
+# Directly import the function that will be used as a tool
+from service.stock_data_service import get_technical_indicators
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -47,49 +45,28 @@ def extract_ticker_from_input(user_input: str) -> Optional[str]:
     
     return tickers[0] if tickers else None
 
-
-# Create MCP toolset by connecting to the MCP server
-# This toolset will lazy-load the available tools (get_technical_indicators, etc.)
-try:
-    logger.info(f"RecommendationAgent: Connecting to MCP server at {settings.MCP_SERVER_URL}")
-    mcp_tools = MCPToolset(connection_params=SseConnectionParams(url=settings.MCP_SERVER_URL))
-    logger.info("RecommendationAgent: Successfully created MCP toolset")
-    
-    # Test MCP connection by listing tools
-    try:
-        logger.info("RecommendationAgent: Testing MCP connection by listing tools...")
-        # Note: This might not work immediately, but we'll log it
-        logger.info("RecommendationAgent: MCP toolset created, tools will be lazy-loaded on first use")
-    except Exception as test_e:
-        logger.warning(f"RecommendationAgent: Could not test MCP connection immediately: {test_e}")
-        
-except Exception as e:
-    logger.error(f"RecommendationAgent: Failed to create MCP toolset: {e}")
-    raise e
-
 # Define the Recommendation Agent
 recommendation_agent = LlmAgent(
     name="recommendation_agent",
     model="gemini-1.5-flash",
     # The description is vital for the orchestrator to decide when to delegate to this agent
     description="Specialized agent for providing buy, sell, or hold recommendations for stocks based on technical analysis. Use this agent when users ask for trading advice or stock recommendations.",
-    # Provide the agent with the MCP tools it's allowed to use
-    tools=[mcp_tools],
-    #enable_function_calling=True,  # Enable function call execution
-    #tool_code_interpreter=ToolCodeInterpreter(),
+    # Provide the agent with the python function directly. ADK will automatically
+    # convert it into a tool that the LLM can use.
+    tools=[get_technical_indicators],
     # The instruction prompt guides the agent's behavior
     instruction="""You are a technical analyst that returns JSON data for stock recommendations.
 
 WORKFLOW:
 1.  **Extract Ticker**: Extract the stock ticker from the user's request (e.g., "should I buy AAPL?" → extract "AAPL").
 2.  **Call Tool**: Use the `get_technical_indicators` tool to fetch the analysis data for the extracted ticker.
-3.  **Process Output**: The tool will return a JSON string. You must parse this JSON to access the data.
+3.  **Process Output**: The tool will return a Python dictionary containing the analysis data.
 4.  **Construct Response**: Use the data from the tool's output to build the final JSON response in the specified format.
 
 TOOL USAGE:
 - The `get_technical_indicators` tool takes one argument: `ticker` (string).
 - Example call: `get_technical_indicators(ticker="AAPL")`
-- The tool returns a JSON object with fields like `signal`, `last_close`, `rsi`, etc.
+- The tool returns a dictionary with fields like `signal`, `last_close`, `rsi`, etc.
 
 RESPONSE FORMAT:
 - After processing the tool's output, create a JSON object with the following structure:

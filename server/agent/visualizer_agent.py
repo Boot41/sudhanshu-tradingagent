@@ -1,17 +1,17 @@
-"""Visualizer agent: stock data visualization using Google ADK and MCP tools.
+"""Visualizer agent: stock data visualization using direct tool calls.
 
 This agent is designed to work as a sub-agent in ADK's multi-agent system,
 specialized in creating interactive charts and graphs for stock data.
 """
 
 from google.adk.agents import LlmAgent
-from google.adk.tools import MCPToolset
-from google.adk.tools.mcp_tool import SseConnectionParams
-from core.config import settings
 import json
 import re
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional
+
+# Directly import the function that will be used as a tool
+from service.stock_data_service import get_historical_data
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -50,53 +50,45 @@ def extract_ticker_and_period(user_input: str) -> tuple[Optional[str], str]:
     ticker = tickers[0] if tickers else None
     return ticker, period
 
-
-# Create MCP toolset by connecting to the MCP server
-try:
-    logger.info(f"VisualizerAgent: Connecting to MCP server at {settings.MCP_SERVER_URL}")
-    mcp_tools = MCPToolset(connection_params=SseConnectionParams(url=settings.MCP_SERVER_URL))
-    logger.info("VisualizerAgent: Successfully created MCP toolset")
-    logger.info("VisualizerAgent: MCP toolset created, tools will be lazy-loaded on first use")
-except Exception as e:
-    logger.error(f"VisualizerAgent: Failed to create MCP toolset: {e}")
-    raise e
-
 # Define the Visualizer Agent
 visualizer_agent = LlmAgent(
     name="visualizer_agent",
     model="gemini-1.5-flash",
     description="Specialized agent for creating interactive stock charts and visualizations. Use this agent when users want to see charts, graphs, or plots of stock data.",
-    tools=[mcp_tools],
-    instruction="""You are a stock data visualization specialist that creates interactive Chart.js charts and graphs of stock data. Use this agent to plot, chart, or visualize stock data over time periods.
+    # Provide the agent with the python function directly. ADK will automatically
+    # convert it into a tool that the LLM can use.
+    tools=[get_historical_data],
+    instruction="""You are a stock data visualization specialist that returns JSON for rendering charts.
+
 WORKFLOW:
-1. Extract the stock ticker and time period from the user's request
-2. Use the 'get_historical_data' tool to fetch the necessary time-series data
-3. Return the data as JSON format
+1.  **Extract Ticker and Period**: Extract the stock ticker and time period from the user's request.
+2.  **Call Tool**: Use the `get_historical_data` tool to fetch the necessary time-series data. The tool will return a Python dictionary.
+3.  **Construct Response**: Use the dictionary from the tool's output to build the final JSON response. The `data` field in your response should contain the entire dictionary returned by the tool, serialized into a JSON string.
 
 EXTRACTION RULES:
-- Ticker: Look for 2-5 uppercase letters (e.g., AAPL, MSFT, GOOGL)
-- Period: Extract from phrases like "1 year", "6 months", "30 days" or standard formats (1y, 6mo, 30d)
-- Default period: 1y if not specified
-- If no ticker is found, return {"error": "Please specify a stock ticker symbol"}
+-   Ticker: Look for 2-5 uppercase letters (e.g., AAPL, MSFT, GOOGL).
+-   Period: Extract from phrases like "1 year", "6 months", "30 days" or standard formats (1y, 6mo, 30d).
+-   Default period: "1y" if not specified.
+-   If no ticker is found, return `{"error": "Please specify a stock ticker symbol"}`.
 
 RESPONSE FORMAT:
-Always return a valid JSON object with the following structure:
+-   Always return a valid JSON object with the following structure.
+-   The `data` field MUST be a JSON string containing the tool's output.
+
 {
   "ticker": "AAPL",
   "period": "1y",
-  "data": "raw_historical_data_json_string",
+  "data": "{\"Open\":{...},\"High\":{...},\"Low\":{...},\"Close\":{...},\"Volume\":{...}}",
   "chart_type": "line",
   "title": "AAPL Stock Price - 1 Year"
 }
 
-If there's an error, return:
+If there's an error from the tool, return:
 {
   "error": "Error message here"
 }
 
 IMPORTANT: Your response must be ONLY valid JSON. Do not include any other text, explanations, or formatting.
-
-DEBUG: Always log when you start processing a request and when you call MCP tools.
 """
 )
 

@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import auth, chat
 from db.db import create_tables, test_connection
-from tools.mcp_server import initialize_mcp_server
 import uvicorn
 
 app = FastAPI(
@@ -26,10 +25,7 @@ async def startup_event():
     if not test_connection():
         raise Exception("Database connection failed")
     create_tables()
-    
-    # Initialize the MCP server
-    initialize_mcp_server(app)
-    print("MCP server initialized and mounted at /mcp with tools: get_historical_data, get_technical_indicators")
+    print("Database tables created.")
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
