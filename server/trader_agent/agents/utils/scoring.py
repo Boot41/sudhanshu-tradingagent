@@ -18,7 +18,7 @@ Returns normalized float (0–100) → Research agents consume these scores.
 
 import logging
 from typing import List, Dict, Any, Optional
-from indicators import rsi, macd, sma, extract_closing_prices
+from .indicators import rsi, macd, sma, extract_closing_prices
 
 logger = logging.getLogger(__name__)
 

@@ -17,11 +17,10 @@ Flow:
 import logging
 from typing import Dict, Any
 from google.adk.agents import LlmAgent
-from google.adk.tools import Tool
 
 # Import utility functions
-from utils.nasdaq_api import get_company_data
-from utils.scoring import fundamentals_score
+from ..utils.nasdaq_api import get_company_data
+from ..utils.scoring import fundamentals_score
 
 logger = logging.getLogger(__name__)
 
@@ -125,19 +124,21 @@ def calculate_fundamentals_score(company_data: Dict[str, Any]) -> Dict[str, Any]
 
 # Define the Fundamentals Agent using Google ADK
 FundamentalsAgent = LlmAgent(
+    model="gemini-2.0-flash-exp",
     name="fundamentals_analyst",
-    role="Analyze company fundamentals and compute fundamental strength scores",
-    instructions="""
-    You are a fundamentals analyst responsible for evaluating company financial health and fundamentals.
+    description="Analyze company fundamentals and compute fundamental strength scores",
+    instruction="""
+    You are a fundamentals analyst agent that evaluates companies based on their financial health and intrinsic value.
     
-    Your workflow:
-    1. When given a stock ticker, use fetch_company_data to get comprehensive company information from NASDAQ API
-    2. Use calculate_fundamentals_score to convert the raw fundamental data into a normalized 0-100 score
-    3. Provide clear analysis explaining the key factors that influenced the score
+    Your primary functions are:
+    1. Fetch comprehensive company financial data using the fetch_company_data tool
+    2. Calculate fundamentals scores (0-100) using the calculate_fundamentals_score tool
+    3. Provide detailed analysis of financial metrics and ratios
     
-    Key metrics you analyze:
-    - Market capitalization and company size
-    - P/E ratio and valuation metrics
+    Key areas to analyze:
+    - Market capitalization and valuation ratios (P/E, P/B, EV/EBITDA)
+    - Financial health indicators (debt-to-equity, current ratio, ROE, ROA)
+    - Profitability metrics (profit margins, revenue growth)
     - Dividend yield and income generation
     - Trading volume and liquidity
     - 52-week price performance and momentum
@@ -147,7 +148,7 @@ FundamentalsAgent = LlmAgent(
     Focus on identifying value opportunities and potential red flags in the fundamental data.
     """,
     tools=[
-        Tool(name="fetch_company_data", func=fetch_company_data),
-        Tool(name="calculate_fundamentals_score", func=calculate_fundamentals_score)
+        fetch_company_data,
+        calculate_fundamentals_score
     ]
 )

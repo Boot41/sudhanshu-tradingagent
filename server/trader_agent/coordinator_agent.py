@@ -31,18 +31,17 @@ from datetime import datetime
 from typing import Dict, Any, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from google.adk.agents import LlmAgent
-from google.adk.tools import Tool
 
 # Import all agent modules
-from agents.analysts.ticker_agent import resolve_and_validate_ticker
-from agents.analysts.fundamentals_agent import fetch_company_data, calculate_fundamentals_score
-from agents.analysts.technical_agent import fetch_historical_data, calculate_technical_indicators, calculate_technical_score
-from agents.analysts.sentiment_agent import analyze_news_sentiment
-from agents.analysts.news_agent import analyze_news_events
-from agents.researchers.researcher_bull import calculate_bullish_assessment, generate_bullish_argument
-from agents.researchers.researcher_bear import calculate_bearish_assessment, analyze_bearish_scenario
-from agents.manager.research_manager import aggregate_research_scores, synthesize_research_consensus
-from agents.trader.trader_agent import make_trading_decision, calculate_position_size, apply_risk_management
+from .agents.analysts.ticker_agent import resolve_and_validate_ticker
+from .agents.analysts.fundamentals_agent import fetch_company_data, calculate_fundamentals_score
+from .agents.analysts.technical_agent import fetch_historical_data, calculate_technical_indicators, calculate_technical_score
+from .agents.analysts.sentiment_agent import analyze_news_sentiment
+from .agents.analysts.news_agent import analyze_news_events
+from .agents.researchers.researcher_bull import calculate_bullish_assessment
+from .agents.researchers.researcher_bear import calculate_bearish_assessment, analyze_bearish_scenario
+from .agents.manager.research_manager import aggregate_research_scores, synthesize_research_consensus
+from .agents.trader.trader_agent import make_trading_decision, validate_trade_parameters
 
 logger = logging.getLogger(__name__)
 
@@ -419,14 +418,17 @@ def finalize_trading_decision(research_consensus: Dict[str, Any]) -> Dict[str, A
         }
     
     try:
-        # Use trader agent to make decision
+        # Use trader agent to make decision (includes position sizing and risk management)
         trading_decision = make_trading_decision(research_consensus)
         
-        # Apply additional risk management layers
-        risk_managed_decision = apply_risk_management(trading_decision, research_consensus)
+        # Validate final decision using trader_agent's validation function
+        validation_result = validate_trade_parameters(trading_decision)
         
-        # Validate final decision meets all constraints
-        validated_decision = validate_trading_decision(risk_managed_decision)
+        if validation_result["valid"]:
+            validated_decision = validation_result["adjusted_decision"]
+        else:
+            logger.warning(f"Trading decision validation failed: {validation_result['errors']}")
+            validated_decision = validation_result["adjusted_decision"]  # Use adjusted version
         
         logger.info(f"Trading decision finalized: {validated_decision['action']} {validated_decision['position_size']:.1f}%")
         return validated_decision
@@ -550,7 +552,22 @@ def execute_technical_analysis(ticker: str) -> Dict[str, Any]:
     """Execute technical analysis for given ticker."""
     try:
         historical_data = fetch_historical_data(ticker)
-        indicators = calculate_technical_indicators(historical_data)
+        
+        # Check if historical data fetch was successful
+        if "error" in historical_data:
+            logger.error(f"Historical data fetch failed for {ticker}: {historical_data['error']}")
+            return {"technical_score": 50.0, "error": historical_data["error"]}
+        
+        # Extract closing prices from historical data
+        closing_prices = historical_data.get("closing_prices", [])
+        if not closing_prices:
+            logger.error(f"No closing prices available for {ticker}")
+            return {"technical_score": 50.0, "error": "No closing prices available"}
+        
+        # Calculate technical indicators from closing prices
+        indicators = calculate_technical_indicators(closing_prices)
+        
+        # Calculate final technical score from indicators
         return calculate_technical_score(indicators)
     except Exception as e:
         logger.error(f"Technical analysis failed for {ticker}: {e}")
@@ -649,99 +666,28 @@ def validate_trading_decision(decision: Dict[str, Any]) -> Dict[str, Any]:
 
 # Define the Coordinator Agent using Google ADK
 CoordinatorAgent = LlmAgent(
-    name="coordinator_agent",
-    role="Orchestrate complete trading analysis workflow from user input to actionable trading decisions",
-    instructions="""
-    You are the Trading Coordinator responsible for managing the entire trading analysis pipeline.
+    model="gemini-2.0-flash-exp",
+    name="trading_coordinator",
+    description="Orchestrate comprehensive stock analysis workflow across multiple specialized agents",
+    instruction="""
+    You are the trading coordinator agent that orchestrates comprehensive stock analysis workflows.
     
-    Your core responsibilities:
-    1. WORKFLOW ORCHESTRATION: Execute the complete 6-layer trading analysis pipeline
-    2. DATA FLOW MANAGEMENT: Ensure proper data passing between agent layers
-    3. ERROR HANDLING: Manage failures gracefully with fallback strategies
-    4. QUALITY ASSURANCE: Validate outputs at each stage before proceeding
-    5. AUDIT TRAIL: Maintain comprehensive logging for regulatory compliance
+    Your primary functions are:
+    1. Coordinate analysis across ticker, fundamentals, technical, sentiment, and news agents
+    2. Manage bull and bear research perspectives through researcher agents
+    3. Synthesize final trading recommendations through research manager and trader agents
     
-    EXECUTION SEQUENCE:
+    Your workflow orchestration:
+    - Start with ticker validation and resolution
+    - Execute parallel analysis across all analyst agents
+    - Aggregate results through bull and bear researchers
+    - Generate final trading decisions through research manager and trader
+    - Provide comprehensive analysis reports with actionable recommendations
     
-    Phase 1 - Input Validation & Ticker Resolution:
-    - Receive user input (company name or ticker symbol)
-    - Use validate_workflow_inputs() to resolve and validate ticker
-    - Validate ticker exists and is tradeable
-    - If validation fails: return error with suggestions
-    
-    Phase 2 - Parallel Analyst Execution:
-    Execute all 4 analysts in parallel for efficiency:
-    - FundamentalsAgent: fetch_company_data() + calculate_fundamentals_score()
-    - TechnicalAgent: fetch_historical_data() + calculate_technical_indicators() + calculate_technical_score()
-    - SentimentAgent: analyze_news_sentiment() for lexicon-based sentiment analysis
-    - NewsAgent: analyze_news_events() for event-driven impact analysis
-    
-    Collect outputs: {fundamentals_score, technical_score, sentiment_score, news_score}
-    
-    Phase 3 - Research Perspective Analysis:
-    Execute bull and bear researchers in parallel:
-    - ResearcherBull: calculate_bullish_assessment() + generate_bullish_argument()
-    - ResearcherBear: calculate_bearish_assessment() + analyze_bearish_scenario()
-    
-    Collect outputs: {bull_score, bull_confidence, bear_score, bear_confidence, rationales}
-    
-    Phase 4 - Research Management & Consensus:
-    - ResearchManager: aggregate_research_scores() to create net_score (-100 to +100)
-    - Apply 10% bear dampening to prevent over-penalization
-    - Determine stance (bullish ≥+20, bearish ≤-20, neutral -20 to +20)
-    - Calculate confidence based on signal strength and researcher alignment
-    
-    Phase 5 - Trading Decision & Risk Management:
-    - TraderAgent: make_trading_decision() with strict risk controls
-    - Apply 40% minimum confidence threshold
-    - Calculate position sizing: (|net_score|/100) * (confidence/100) * 20% max
-    - Enforce maximum 20% portfolio exposure per trade
-    - Validate all parameters before finalizing
-    
-    Phase 6 - Result Compilation & Audit:
-    - Package complete analysis chain with timestamps
-    - Include all intermediate scores and rationales
-    - Provide executive summary with key decision factors
-    - Generate audit trail for compliance and review
-    
-    ERROR HANDLING STRATEGIES:
-    - Ticker validation failure: Suggest similar tickers, request clarification
-    - Analyst failure: Use default neutral scores (50.0) with error flags
-    - Data unavailability: Proceed with available data, note limitations
-    - Network issues: Implement retry logic with exponential backoff
-    - Calculation errors: Default to conservative HOLD position
-    
-    QUALITY GATES:
-    - Validate ticker resolution before proceeding to analysis
-    - Ensure all analyst scores are in valid 0-100 range
-    - Verify research scores align with input analyst data
-    - Confirm trading decision respects all risk management rules
-    - Check final output completeness before returning to user
-    
-    PERFORMANCE REQUIREMENTS:
-    - Complete analysis within 30 seconds for standard requests
-    - Handle up to 10 concurrent analysis requests
-    - Maintain 99.5% uptime for trading hours
-    - Log all decisions for regulatory audit requirements
-    
-    RISK MANAGEMENT PRINCIPLES:
-    - Never exceed 20% portfolio allocation per trade
-    - Require minimum 40% confidence for any non-HOLD action
-    - Default to HOLD on any system errors or data quality issues
-    - Implement circuit breakers for extreme market conditions
-    - Maintain detailed audit logs for all trading decisions
-    
-    Remember: You are the central orchestrator ensuring reliable, auditable, and risk-managed 
-    trading decisions through systematic analysis of fundamental, technical, sentiment, and news factors.
+    Always provide complete analysis workflows with clear decision rationale and risk assessment.
+    Focus on coordinating efficient multi-agent analysis for optimal trading decisions.
     """,
-    tools=[
-        Tool(name="orchestrate_trading_analysis", func=orchestrate_trading_analysis),
-        Tool(name="validate_workflow_inputs", func=validate_workflow_inputs),
-        Tool(name="execute_analyst_layer", func=execute_analyst_layer),
-        Tool(name="execute_research_layer", func=execute_research_layer),
-        Tool(name="finalize_trading_decision", func=finalize_trading_decision),
-        Tool(name="generate_audit_trail", func=generate_audit_trail)
-    ]
+    tools=[orchestrate_trading_analysis]
 )
 
 root_agent = CoordinatorAgent

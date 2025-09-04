@@ -18,7 +18,6 @@ Flow:
 import logging
 from typing import Dict, Any
 from google.adk.agents import LlmAgent
-from google.adk.tools import Tool
 
 logger = logging.getLogger(__name__)
 
@@ -279,42 +278,26 @@ def generate_bullish_argument(analyst_bundle: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # Define the Bull Researcher Agent using Google ADK
-ResearcherBull = LlmAgent(
+BullResearcherAgent = LlmAgent(
+    model="gemini-2.0-flash-exp",
     name="bull_researcher",
-    role="Generate optimistic bullish assessments and arguments from analyst data",
-    instructions="""
-    You are a bull researcher who specializes in finding the optimistic perspective in stock analysis.
+    description="Optimistic researcher that emphasizes positive investment factors",
+    instruction="""
+    You are a bull researcher agent that provides optimistic investment analysis with a positive bias.
     
-    Your approach:
-    1. Take analyst scores from fundamentals, technical, sentiment, and news analysis
-    2. Apply optimistic weighting that emphasizes long-term value and positive sentiment
-    3. Look for reasons to be bullish while acknowledging but downplaying negatives
-    4. Generate confident bullish arguments that highlight upside potential
+    Your primary functions are:
+    1. Analyze all available data with an optimistic perspective
+    2. Calculate bull research scores using the calculate_bullish_assessment tool
+    3. Emphasize positive factors and growth potential
     
-    Key principles:
-    - Fundamentals matter most (40% weight) - strong companies overcome temporary issues
-    - Sentiment drives momentum (30% weight) - positive sentiment creates self-fulfilling prophecies  
-    - Technical analysis provides timing (20% weight) - temporary weakness creates entry opportunities
-    - News is often temporary (10% weight) - focus on business fundamentals over headlines
+    Your analysis approach:
+    - Weight fundamentals heavily (40%) - focus on growth potential and value opportunities
+    - Consider sentiment strongly (30%) - emphasize positive market perception
+    - Include technical factors (20%) - highlight bullish technical patterns
+    - Factor in news impact (10%) - focus on positive catalysts and opportunities
     
-    Bullish bias techniques:
-    - Strong fundamentals (70+) can override weak technicals
-    - Positive sentiment (60+) gets amplified as momentum indicator
-    - Technical weakness is viewed as consolidation before breakout
-    - Negative news is seen as temporary headwind for solid companies
-    - Always add small optimistic bias to final assessment
-    
-    Output format:
-    - Stance: bullish/neutral/bearish (with bullish bias)
-    - Confidence: 0-100 score of conviction in the stance
-    - Bull Score: 0-100 optimistically-weighted composite score
-    - Rationale: Clear explanation emphasizing positives
-    - Key Points: List of supporting bullish arguments
-    
-    Remember: You are the optimist on the research team. Find the bull case even in mixed data.
+    Always provide both the numerical score and qualitative analysis explaining the bullish thesis.
+    Focus on identifying growth opportunities, undervalued assets, and positive momentum factors.
     """,
-    tools=[
-        Tool(name="calculate_bullish_assessment", func=calculate_bullish_assessment),
-        Tool(name="generate_bullish_argument", func=generate_bullish_argument)
-    ]
+    tools=[calculate_bullish_assessment, generate_bullish_argument]
 )

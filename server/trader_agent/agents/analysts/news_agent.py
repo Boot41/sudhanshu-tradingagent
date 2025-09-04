@@ -18,11 +18,11 @@ Flow:
 import logging
 from typing import Dict, Any, List
 from google.adk.agents import LlmAgent
-from google.adk.tools import Tool
+
 
 # Import utility functions
-from utils.nasdaq_api import get_news_data
-from utils.scoring import news_score
+from ..utils.nasdaq_api import get_news_data
+from ..utils.scoring import news_score
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ def calculate_news_impact(articles: List[Dict[str, Any]]) -> Dict[str, Any]:
         category_counts = {cat: 0 for cat in event_categories.keys()}
         
         # Import keywords from scoring module for detailed analysis
-        from utils.scoring import HIGH_IMPACT_POSITIVE, HIGH_IMPACT_NEGATIVE
+        from ..utils.scoring import HIGH_IMPACT_POSITIVE, HIGH_IMPACT_NEGATIVE
         
         for article in articles:
             if not isinstance(article, dict):
@@ -307,52 +307,32 @@ def analyze_news_events(ticker: str, limit: int = 10) -> Dict[str, Any]:
 
 # Define the News Agent using Google ADK
 NewsAgent = LlmAgent(
+    model="gemini-2.0-flash-exp",
     name="news_analyst",
-    role="Analyze news events and compute event-level impact scores for stock analysis",
-    instructions="""
-    You are a news analyst responsible for evaluating market-moving events through news analysis.
+    description="Analyze news events and compute news impact scores for stocks",
+    instruction="""
+    You are a news analyst agent that evaluates the impact of news events on stock performance.
     
-    Your workflow:
-    1. When given a stock ticker, use fetch_news_data to get recent news articles from NASDAQ API
-    2. Use calculate_news_impact to analyze articles for high-impact events and macro factors
-    3. Use analyze_news_events for a complete end-to-end analysis combining both steps
-    4. Focus on event-level risk assessment rather than sentiment analysis
+    Your primary functions are:
+    1. Fetch recent news data using the fetch_news_data tool
+    2. Calculate news impact scores (0-100) using the calculate_news_score tool
+    3. Provide detailed analysis of news events and their market implications
     
-    News impact analysis approach:
-    - Detects big events: lawsuits, mergers, product launches, regulatory issues
-    - Focuses on macro-level developments that could significantly impact stock price
-    - Produces a news impact score separate from sentiment analysis
-    - Categorizes events into: earnings, regulatory, corporate, product, management, financial
-    - Normalizes results to 0-100 scale where:
-      * 0-30: Strong negative impact events (lawsuits, regulatory issues, earnings misses)
-      * 30-70: Neutral/routine news coverage
-      * 70-100: Strong positive impact events (partnerships, product launches, earnings beats)
+    Key news factors you analyze:
+    - Breaking news and market-moving events
+    - Earnings announcements and financial results
+    - Corporate actions and strategic initiatives
+    - Regulatory changes and compliance issues
+    - Industry developments and competitive landscape
+    - Management changes and leadership updates
+    - Merger and acquisition activities
+    - Product launches and innovation announcements
     
-    Key event types you track:
-    - High-impact positive: earnings beats, contract wins, partnerships, acquisitions, guidance raises
-    - High-impact negative: guidance cuts, SEC probes, regulatory actions, recalls, lawsuits
-    - Corporate events: mergers, acquisitions, spin-offs, management changes
-    - Regulatory events: FDA approvals, SEC investigations, compliance issues
-    - Product events: launches, recalls, patent approvals, innovations
-    
-    Market implications:
-    - High positive impact (70+): Potential catalyst for price appreciation, increased institutional interest
-    - High negative impact (30-): Potential headwinds, regulatory overhang, operational challenges
-    - Neutral impact (30-70): Business as usual, fundamentals likely primary driver
-    - Consider event timing, magnitude, and potential duration of impact
-    
-    Always provide both quantitative impact scores and qualitative event analysis to help traders understand:
-    - Key events that could move the stock price
-    - Event categories and their relative importance
-    - Potential timeline and magnitude of impact
-    - Distinction between temporary events vs. structural changes
-    
-    Focus on identifying market-moving events, regulatory developments, and macro factors that could 
-    significantly impact the company's business operations and stock valuation.
+    Always provide both the numerical score and qualitative analysis explaining the news impact.
+    Focus on identifying event-driven catalysts, market reactions, and potential price movements.
     """,
     tools=[
-        Tool(name="fetch_news_data", func=fetch_news_data),
-        Tool(name="calculate_news_impact", func=calculate_news_impact),
-        Tool(name="analyze_news_events", func=analyze_news_events)
+        fetch_news_data,
+        calculate_news_impact
     ]
 )

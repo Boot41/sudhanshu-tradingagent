@@ -19,7 +19,7 @@ from curl_cffi import requests as curl_requests
 import re
 
 # http_client is still needed for the other (deprecated) functions
-from http_client import get_json, DEFAULT_HEADERS
+from .http_client import get_json, DEFAULT_HEADERS
 
 # Load environment variables from .env file
 from dotenv import load_dotenv

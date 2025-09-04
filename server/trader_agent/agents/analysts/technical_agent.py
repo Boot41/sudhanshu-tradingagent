@@ -18,12 +18,11 @@ Flow:
 import logging
 from typing import Dict, Any, List
 from google.adk.agents import LlmAgent
-from google.adk.tools import Tool
 
 # Import utility functions
-from utils.nasdaq_api import get_historical_data
-from utils.indicators import extract_closing_prices, rsi, macd, sma, ema
-from utils.scoring import technical_score
+from ..utils.nasdaq_api import get_historical_data
+from ..utils.indicators import extract_closing_prices, rsi, macd, sma, ema
+from ..utils.scoring import technical_score
 
 logger = logging.getLogger(__name__)
 
@@ -295,40 +294,31 @@ def calculate_technical_score(indicators: Dict[str, Any]) -> Dict[str, Any]:
 
 # Define the Technical Agent using Google ADK
 TechnicalAgent = LlmAgent(
+    model="gemini-2.0-flash-exp",
     name="technical_analyst",
-    role="Analyze stock price patterns and compute technical analysis scores",
-    instructions="""
-    You are a technical analyst responsible for evaluating stock price movements and technical indicators.
+    description="Analyze stock price data and technical indicators to compute technical strength scores",
+    instruction="""
+    You are a technical analyst agent that evaluates stocks based on price action and technical indicators.
     
-    Your workflow:
-    1. When given a stock ticker, use fetch_historical_data to get historical OHLCV data from NASDAQ API
-    2. Use calculate_technical_indicators to compute RSI, MACD, SMA, and EMA values from the price data
-    3. Use calculate_technical_score to convert the technical indicators into a normalized 0-100 score
-    4. Provide clear analysis explaining the technical signals and their implications
+    Your primary functions are:
+    1. Fetch historical price data using the fetch_historical_data tool
+    2. Calculate technical scores (0-100) using the calculate_technical_score tool
+    3. Provide detailed analysis of technical patterns and indicators
     
-    Key indicators you analyze:
-    - RSI (Relative Strength Index): Identifies overbought/oversold conditions
-    - MACD (Moving Average Convergence Divergence): Shows trend changes and momentum
-    - SMA (Simple Moving Averages): 50-period and 200-period for trend identification
-    - EMA (Exponential Moving Averages): 12-period and 26-period for responsive trend analysis
-    - Price position relative to moving averages for trend confirmation
+    Key technical indicators you analyze:
+    - RSI (Relative Strength Index) for momentum
+    - MACD (Moving Average Convergence Divergence) for trend
+    - Simple Moving Averages (SMA) for trend direction
+    - Exponential Moving Averages (EMA) for recent price action
+    - Price momentum and volatility patterns
+    - Support and resistance levels
+    - Volume analysis and trading patterns
     
-    Technical signals interpretation:
-    - RSI < 30: Oversold condition (potential buy signal)
-    - RSI > 70: Overbought condition (potential sell signal)
-    - MACD above signal line: Bullish momentum
-    - MACD below signal line: Bearish momentum
-    - SMA50 > SMA200: Golden cross (bullish trend)
-    - SMA50 < SMA200: Death cross (bearish trend)
-    - Price above SMA50: Uptrend confirmation
-    - Price below SMA50: Downtrend confirmation
-    
-    Always provide both the numerical score and qualitative analysis to help traders understand the technical outlook.
-    Focus on identifying trend direction, momentum, and potential entry/exit points.
+    Always provide both the numerical score and qualitative analysis explaining the technical setup.
+    Focus on identifying trend direction, momentum strength, and potential entry/exit points.
     """,
     tools=[
-        Tool(name="fetch_historical_data", func=fetch_historical_data),
-        Tool(name="calculate_technical_indicators", func=calculate_technical_indicators),
-        Tool(name="calculate_technical_score", func=calculate_technical_score)
+        fetch_historical_data,
+        calculate_technical_score
     ]
 )

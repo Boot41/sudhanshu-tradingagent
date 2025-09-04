@@ -17,11 +17,11 @@ Flow:
 import logging
 from typing import Dict, Any, List
 from google.adk.agents import LlmAgent
-from google.adk.tools import Tool
+
 
 # Import utility functions
-from utils.nasdaq_api import get_news_data
-from utils.scoring import sentiment_score
+from ..utils.nasdaq_api import get_news_data
+from ..utils.scoring import sentiment_score
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ def calculate_sentiment(articles: List[Dict[str, Any]]) -> Dict[str, Any]:
         analyzed_articles = []
         
         # Import keywords from scoring module for analysis
-        from utils.scoring import POSITIVE_KEYWORDS, NEGATIVE_KEYWORDS
+        from ..utils.scoring import POSITIVE_KEYWORDS, NEGATIVE_KEYWORDS
         
         for article in articles:
             if not isinstance(article, dict):
@@ -289,48 +289,31 @@ def analyze_news_sentiment(ticker: str, limit: int = 10) -> Dict[str, Any]:
 
 # Define the Sentiment Agent using Google ADK
 SentimentAgent = LlmAgent(
+    model="gemini-2.0-flash-exp",
     name="sentiment_analyst",
-    role="Analyze news sentiment and compute sentiment-based scores for stock analysis",
-    instructions="""
-    You are a sentiment analyst responsible for evaluating market sentiment through news analysis.
+    description="Analyze news sentiment and compute sentiment strength scores for stocks",
+    instruction="""
+    You are a sentiment analyst agent that evaluates market sentiment based on news and social media data.
     
-    Your workflow:
-    1. When given a stock ticker, use fetch_news to get recent news articles from NASDAQ API
-    2. Use calculate_sentiment to analyze the sentiment of news articles using lexicon-based approach
-    3. Use analyze_news_sentiment for a complete end-to-end analysis combining both steps
-    4. Provide clear analysis explaining the sentiment signals and their market implications
+    Your primary functions are:
+    1. Fetch recent news data using the fetch_news tool
+    2. Calculate sentiment scores (0-100) using the calculate_sentiment tool
+    3. Provide detailed analysis of market sentiment and news impact
     
-    Sentiment analysis approach:
-    - Uses lexicon-based method with positive and negative keyword dictionaries
-    - Analyzes both article titles and summaries for sentiment keywords
-    - Counts positive vs negative sentiment indicators
-    - Normalizes results to 0-100 scale where:
-      * 0-30: Predominantly negative sentiment
-      * 30-70: Mixed/neutral sentiment  
-      * 70-100: Predominantly positive sentiment
+    Key sentiment factors you analyze:
+    - News article sentiment (positive, negative, neutral)
+    - Social media buzz and discussion volume
+    - Market perception and investor confidence
+    - Recent developments and announcements
+    - Industry trends and sector sentiment
+    - Analyst ratings and recommendations changes
+    - Earnings announcements and guidance updates
     
-    Key sentiment indicators you track:
-    - Positive keywords: "beat", "surge", "record", "growth", "upgrade", "bullish", "partnership", etc.
-    - Negative keywords: "miss", "drop", "downgrade", "lawsuit", "recession", "bearish", "decline", etc.
-    - High-impact events: earnings beats/misses, guidance changes, regulatory actions, partnerships
-    
-    Market implications:
-    - High positive sentiment (70+): Potential bullish momentum, increased buying interest
-    - High negative sentiment (30-): Potential bearish pressure, selling sentiment
-    - Neutral sentiment (30-70): Balanced market view, fundamentals likely driving price
-    - Consider sentiment in context with technical and fundamental analysis
-    
-    Always provide both quantitative sentiment scores and qualitative analysis to help traders understand:
-    - Overall market sentiment toward the stock
-    - Key themes driving positive/negative sentiment
-    - Potential impact on stock price movement
-    - Number and quality of sentiment signals found
-    
-    Focus on identifying sentiment trends, news themes, and potential market-moving events.
+    Always provide both the numerical score and qualitative analysis explaining the sentiment drivers.
+    Focus on identifying sentiment trends, market perception shifts, and potential catalysts.
     """,
     tools=[
-        Tool(name="fetch_news", func=fetch_news),
-        Tool(name="calculate_sentiment", func=calculate_sentiment),
-        Tool(name="analyze_news_sentiment", func=analyze_news_sentiment)
+        fetch_news,
+        calculate_sentiment
     ]
 )

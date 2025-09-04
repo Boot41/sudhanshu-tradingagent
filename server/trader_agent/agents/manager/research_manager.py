@@ -20,7 +20,6 @@ Flow:
 import logging
 from typing import Dict, Any
 from google.adk.agents import LlmAgent
-from google.adk.tools import Tool
 
 logger = logging.getLogger(__name__)
 
@@ -253,49 +252,26 @@ def synthesize_research_consensus(research_bundle: Dict[str, Any]) -> Dict[str, 
 
 
 # Define the Research Manager Agent using Google ADK
-ResearchManager = LlmAgent(
+ResearchManagerAgent = LlmAgent(
+    model="gemini-2.0-flash-exp",
     name="research_manager",
-    role="Aggregate bull and bear research into balanced net score and consensus for trader decision-making",
-    instructions="""
-    You are the research manager responsible for creating a balanced consensus from bullish and bearish research assessments.
+    description="Aggregate bull and bear research perspectives into balanced investment recommendations",
+    instruction="""
+    You are a research manager agent that synthesizes bull and bear research into balanced investment decisions.
     
-    Your role and approach:
-    - Receive research bundle containing outputs from bull and bear researchers
-    - Aggregate their scores, confidence levels, and rationales into a single net assessment
-    - Apply balanced weighting that prevents extreme swings while maintaining signal integrity
-    - Provide clear rationale for the final stance and confidence level
+    Your primary functions are:
+    1. Aggregate research from bull and bear researchers
+    2. Calculate net research scores using the aggregate_research_scores tool
+    3. Provide balanced investment recommendations considering both perspectives
     
-    Your workflow:
-    1. Use aggregate_research_scores to combine bull_score and bear_score into net_score
-    2. Use synthesize_research_consensus to create comprehensive research summary
-    3. Apply slight bear dampening (10%) to prevent over-penalization in uncertain markets
-    4. Determine stance (bullish/neutral/bearish) based on net_score thresholds
-    5. Calculate confidence based on score magnitude and researcher agreement
+    Your analysis approach:
+    - Balance optimistic and pessimistic viewpoints
+    - Apply dampening factors to extreme positions
+    - Consider market conditions and risk factors
+    - Generate net scores ranging from -100 (strong sell) to +100 (strong buy)
     
-    Aggregation methodology:
-    - Net Score = bull_score - (bear_score * 0.9)
-    - Stance thresholds: Bullish ≥+20, Bearish ≤-20, Neutral = -20 to +20
-    - Confidence based on signal strength and researcher alignment
-    - Bear dampening prevents excessive pessimism in mixed signals
-    
-    Key outputs you provide:
-    - Net Score: -100 to +100 representing final balanced assessment
-    - Stance: bullish, neutral, or bearish based on net score
-    - Confidence: 30-95% representing conviction in the stance
-    - Rationale: Clear explanation of aggregation logic and key factors
-    - Consensus: Synthesized summary balancing both research perspectives
-    
-    Decision framework:
-    - Strong signals (|net_score| > 40): High confidence in directional stance
-    - Moderate signals (20 < |net_score| < 40): Moderate confidence in stance
-    - Weak signals (|net_score| < 20): Neutral stance with lower confidence
-    - Researcher agreement boosts confidence, disagreement reduces it
-    
-    Remember: Your job is to create a balanced, actionable assessment that the trader agent
-    can use for decision-making. Avoid extreme positions unless strongly justified by the data.
+    Always provide both the numerical net score and qualitative analysis explaining the balanced recommendation.
+    Focus on synthesizing different perspectives into actionable investment guidance.
     """,
-    tools=[
-        Tool(name="aggregate_research_scores", func=aggregate_research_scores),
-        Tool(name="synthesize_research_consensus", func=synthesize_research_consensus)
-    ]
+    tools=[aggregate_research_scores, synthesize_research_consensus]
 )

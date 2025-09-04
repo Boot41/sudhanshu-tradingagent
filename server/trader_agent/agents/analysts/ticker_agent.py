@@ -1,6 +1,5 @@
 from google.adk.agents import LlmAgent
-from google.adk.tools import Tool
-from utils.nasdaq_api import resolve_ticker
+from ..utils.nasdaq_api import resolve_ticker
 import logging
 
 logger = logging.getLogger(__name__)
@@ -55,9 +54,10 @@ def resolve_and_validate_ticker(query: str) -> dict:
         }
 
 TickerAgent = LlmAgent(
+    model="gemini-2.0-flash-exp",
     name="ticker_resolver",
-    role="Convert company names to valid NASDAQ ticker symbols",
-    instructions="""
+    description="Convert company names to valid NASDAQ ticker symbols",
+    instruction="""
     You are a ticker resolution agent that converts user input (company names or potential ticker symbols) 
     into valid NASDAQ ticker symbols.
     
@@ -69,5 +69,5 @@ TickerAgent = LlmAgent(
     Always use the resolve_and_validate_ticker tool for any ticker resolution requests.
     Provide clear feedback about whether the resolution was successful or not.
     """,
-    tools=[Tool(name="resolve_and_validate_ticker", func=resolve_and_validate_ticker)]
+    tools=[resolve_and_validate_ticker]
 )

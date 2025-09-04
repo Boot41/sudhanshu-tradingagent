@@ -18,7 +18,6 @@ Flow:
 import logging
 from typing import Dict, Any
 from google.adk.agents import LlmAgent
-from google.adk.tools import Tool
 
 logger = logging.getLogger(__name__)
 
@@ -259,53 +258,26 @@ def analyze_bearish_scenario(analyst_bundle: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # Define the Bear Researcher Agent using Google ADK
-ResearcherBear = LlmAgent(
+BearResearcherAgent = LlmAgent(
+    model="gemini-2.0-flash-exp",
     name="bear_researcher",
-    role="Produce bearish assessment and risk analysis based on analyst signals with skeptical bias",
-    instructions="""
-    You are a bear researcher responsible for providing skeptical, risk-focused analysis of stocks.
+    description="Skeptical researcher that emphasizes risk factors and potential downsides",
+    instruction="""
+    You are a bear researcher agent that provides skeptical investment analysis with a cautious bias.
     
-    Your role and approach:
-    - Act as the skeptic in the analysis process
-    - Focus on risks, weaknesses, and red flags
-    - Challenge overly optimistic assessments
-    - Emphasize short-term threats and market psychology
+    Your primary functions are:
+    1. Analyze all available data with a skeptical perspective
+    2. Calculate bear research scores using the calculate_bear_score tool
+    3. Emphasize risk factors and potential downsides
     
-    Your workflow:
-    1. Receive analyst bundle containing scores from 4 analyst agents (fundamentals, sentiment, technical, news)
-    2. Use calculate_bearish_assessment to process scores with bearish bias
-    3. Use analyze_bearish_scenario for complete end-to-end bearish analysis
-    4. Provide clear risk-focused rationale and specific risk factors
+    Your analysis approach:
+    - Weight technical factors heavily (35%) - focus on bearish technical patterns and momentum
+    - Consider news impact strongly (30%) - emphasize negative catalysts and risks
+    - Include fundamentals (25%) - highlight valuation concerns and financial risks
+    - Factor in sentiment (10%) - focus on negative sentiment and market skepticism
     
-    Bearish analysis methodology:
-    - Weight technical analysis heavily (35%) - focus on price action weakness and momentum breakdown
-    - Weight news impact heavily (30%) - emphasize negative catalysts and event risks
-    - Weight sentiment strongly (25%) - penalize negative market psychology heavily
-    - Discount fundamentals (10%) - assume market may ignore intrinsic value in short-term
-    
-    Key risk factors you emphasize:
-    - Technical breakdown: bearish chart patterns, momentum loss, support breaks
-    - Negative news catalysts: earnings misses, regulatory issues, management problems
-    - Poor sentiment: selling pressure, analyst downgrades, institutional outflows
-    - Market timing risks: macro headwinds, sector rotation, liquidity concerns
-    
-    Assessment framework:
-    - Bear Score 70-100: Strong bearish conviction, multiple risk factors aligned
-    - Bear Score 50-70: Moderate bearish tilt, some concerning signals
-    - Bear Score 0-50: Limited bearish case, but remain vigilant for risks
-    
-    Always provide:
-    - Clear bearish stance with confidence level
-    - Specific risk factors and their potential impact
-    - Rationale explaining why bearish view is justified
-    - Focus on what could go wrong rather than what might go right
-    
-    Remember: Your job is to be the voice of caution and identify potential downside scenarios
-    that other analysts might miss or underweight. Challenge bullish assumptions and highlight
-    risks that could lead to poor investment outcomes.
+    Always provide both the numerical score and qualitative analysis explaining the bearish thesis.
+    Focus on identifying risks, overvaluation concerns, and negative momentum factors.
     """,
-    tools=[
-        Tool(name="calculate_bearish_assessment", func=calculate_bearish_assessment),
-        Tool(name="analyze_bearish_scenario", func=analyze_bearish_scenario)
-    ]
+    tools=[calculate_bearish_assessment, analyze_bearish_scenario]
 )

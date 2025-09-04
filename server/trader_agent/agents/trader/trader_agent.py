@@ -26,7 +26,6 @@ Decision Logic:
 import logging
 from typing import Dict, Any
 from google.adk.agents import LlmAgent
-from google.adk.tools import Tool
 
 logger = logging.getLogger(__name__)
 
@@ -281,57 +280,25 @@ def validate_trade_parameters(trade_decision: Dict[str, Any]) -> Dict[str, Any]:
 
 # Define the Trader Agent using Google ADK
 TraderAgent = LlmAgent(
+    model="gemini-2.0-flash-exp",
     name="trader_agent",
-    role="Convert research consensus into actionable trading decisions with risk management",
-    instructions="""
-    You are the Trader Agent responsible for making final trading decisions based on research consensus.
+    description="Execute trading decisions based on research analysis and risk management",
+    instruction="""
+    You are a trader agent that converts research analysis into actionable trading decisions.
     
-    Your role and approach:
-    - Receive assessment from Research Manager containing net_score, stance, confidence, and rationale
-    - Apply systematic decision logic to determine BUY, SELL, or HOLD actions
-    - Calculate appropriate position sizing based on conviction and risk parameters
-    - Enforce strict risk management rules to protect capital
-    - Provide clear rationale for all trading decisions
+    Your primary functions are:
+    1. Convert net research scores into trading actions (BUY/SELL/HOLD)
+    2. Calculate position sizing using the calculate_position_size tool
+    3. Apply risk management and generate trading recommendations
     
-    Your decision framework:
-    1. Confidence Threshold: Require minimum 40% confidence for any non-HOLD action
-    2. Stance Translation: bullish→BUY, bearish→SELL, neutral→HOLD
-    3. Position Sizing: Scale with confidence and net_score magnitude
-    4. Risk Limits: Maximum 20% portfolio exposure per trade
-    5. Minimum Position: Positions < 1% become HOLD to avoid over-trading
+    Your trading approach:
+    - Convert net scores to actions: >20 = BUY, <-20 = SELL, -20 to 20 = HOLD
+    - Apply position sizing based on confidence and risk tolerance
+    - Consider market conditions and portfolio risk management
+    - Generate clear trading recommendations with entry/exit criteria
     
-    Position sizing methodology:
-    - Base Size = (|net_score| / 100) * (confidence / 100) * 20% max exposure
-    - Higher confidence + stronger signals = larger positions
-    - Lower confidence or weak signals = smaller positions or HOLD
-    - Always respect maximum 20% exposure limit
-    
-    Risk management rules you must enforce:
-    - Never exceed 20% portfolio allocation on any single trade
-    - Reject signals with confidence below 40% (force HOLD)
-    - Convert tiny positions (<1%) to HOLD to reduce transaction costs
-    - Validate all parameters before finalizing decisions
-    
-    Your outputs must include:
-    - Action: "BUY", "SELL", or "HOLD"
-    - Position Size: 0-20% of portfolio allocation
-    - Confidence: Pass-through from research assessment
-    - Stance: Pass-through from research assessment  
-    - Net Score: Pass-through from research assessment
-    - Rationale: Clear explanation of decision logic and risk considerations
-    - Risk Metrics: Detailed risk management information
-    
-    Decision examples:
-    - Bullish stance, 80% confidence, net_score +60 → BUY with ~12% position
-    - Bearish stance, 70% confidence, net_score -45 → SELL with ~6.3% position  
-    - Neutral stance, 65% confidence, net_score +5 → HOLD (neutral stance)
-    - Bullish stance, 35% confidence, net_score +40 → HOLD (low confidence)
-    
-    Remember: Your primary responsibility is capital preservation through disciplined risk management
-    while capturing high-conviction opportunities identified by the research process.
+    Always provide both the trading action and detailed rationale explaining the decision.
+    Focus on risk-adjusted returns and proper position sizing for optimal portfolio management.
     """,
-    tools=[
-        Tool(name="make_trading_decision", func=make_trading_decision),
-        Tool(name="validate_trade_parameters", func=validate_trade_parameters)
-    ]
+    tools=[make_trading_decision, validate_trade_parameters]
 )
