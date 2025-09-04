@@ -71,14 +71,14 @@ def calculate_fundamentals_score(company_data: Dict[str, Any]) -> Dict[str, Any]
         
     Returns:
         Dict containing:
-        - fundamentals_score: Float score (0-100)
+        - fundamental_score: Float score (0-100)
         - raw_data: Original company data for auditing
         - analysis: Breakdown of scoring components
     """
     if not company_data or not isinstance(company_data, dict):
         logger.warning("Invalid or empty company data provided to calculate_fundamentals_score")
         return {
-            "fundamentals_score": 50.0,
+            "fundamental_score": 50.0,
             "raw_data": {},
             "analysis": "No data available for analysis"
         }
@@ -93,6 +93,8 @@ def calculate_fundamentals_score(company_data: Dict[str, Any]) -> Dict[str, Any]
         pe_ratio = company_data.get("pe_ratio", "N/A")
         dividend_yield = company_data.get("dividend_yield", "N/A")
         sector = company_data.get("sector", "N/A")
+        debt_to_equity = company_data.get("debt_to_equity", "N/A")
+        price_to_book = company_data.get("price_to_book", "N/A")
         
         analysis = f"""
         Fundamentals Analysis for {symbol}:
@@ -104,7 +106,7 @@ def calculate_fundamentals_score(company_data: Dict[str, Any]) -> Dict[str, Any]
         """
         
         result = {
-            "fundamentals_score": score,
+            "fundamental_score": score,
             "raw_data": company_data,
             "analysis": analysis.strip()
         }
@@ -115,7 +117,7 @@ def calculate_fundamentals_score(company_data: Dict[str, Any]) -> Dict[str, Any]
     except Exception as e:
         logger.error(f"Error calculating fundamentals score: {e}")
         return {
-            "fundamentals_score": 50.0,
+            "fundamental_score": 50.0,
             "raw_data": company_data,
             "analysis": f"Error in analysis: {str(e)}"
         }
