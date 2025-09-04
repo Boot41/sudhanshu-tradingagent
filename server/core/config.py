@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     LLM_MODEL: str
     OPENAI_API_KEY: str
 
+    # Financial Data API Config
+    NASDAQ_API_KEY: str
 
     # Database Config (prefer DATABASE_URL; otherwise build from parts if provided)
     DB_HOST: Optional[str] = None

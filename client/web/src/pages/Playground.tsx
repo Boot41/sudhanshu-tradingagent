@@ -4,10 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChatMessage, VisualizerResponse, ScreenerResponse, RecommenderResponse, TradingResponse } from "@/components/ChatMessage";
+import { TradingAnalysisDisplay } from "@/components/TradingAnalysisDisplay";
 import { AgentSidebar } from "@/components/AgentSidebar";
 import { 
   Brain, Eye, Filter, Target, ShoppingCart, DollarSign, 
-  Send, LogOut, Sparkles, ArrowRight 
+  Send, LogOut, Sparkles, ArrowRight, BarChart3, TrendingUp,
+  Users, Newspaper, FileText
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
@@ -44,46 +46,60 @@ const Playground = () => {
   
   const [agents, setAgents] = useState<Agent[]>([
     {
-      id: "orchestrator",
-      name: "Orchestrator",
+      id: "coordinator",
+      name: "Trading Coordinator",
       icon: Brain,
       status: "idle",
-      description: "Coordinates workflow between agents"
+      description: "Orchestrates complete trading analysis workflow"
     },
     {
-      id: "visualizer",
-      name: "Visualizer",
-      icon: Eye,
-      status: "idle",
-      description: "Creates charts and visual analysis"
-    },
-    {
-      id: "screener",
-      name: "Screener",
-      icon: Filter,
-      status: "idle",
-      description: "Filters and ranks stocks by criteria"
-    },
-    {
-      id: "recommender",
-      name: "Recommender",
+      id: "ticker",
+      name: "Ticker Agent",
       icon: Target,
       status: "idle",
-      description: "Provides buy/sell recommendations"
+      description: "Validates and resolves company names to tickers"
     },
     {
-      id: "buy",
-      name: "Buy Agent",
-      icon: ShoppingCart,
+      id: "fundamentals",
+      name: "Fundamentals Agent",
+      icon: BarChart3,
       status: "idle",
-      description: "Executes purchase transactions"
+      description: "Analyzes company financials and ratios"
     },
     {
-      id: "sell",
-      name: "Sell Agent",
+      id: "technical",
+      name: "Technical Agent",
+      icon: TrendingUp,
+      status: "idle",
+      description: "Calculates technical indicators and trends"
+    },
+    {
+      id: "sentiment",
+      name: "Sentiment Agent",
+      icon: Users,
+      status: "idle",
+      description: "Analyzes news sentiment and market mood"
+    },
+    {
+      id: "news",
+      name: "News Agent",
+      icon: Newspaper,
+      status: "idle",
+      description: "Evaluates news events and market impact"
+    },
+    {
+      id: "research",
+      name: "Research Manager",
+      icon: FileText,
+      status: "idle",
+      description: "Synthesizes bull/bear research perspectives"
+    },
+    {
+      id: "trader",
+      name: "Trader Agent",
       icon: DollarSign,
       status: "idle",
-      description: "Executes sale transactions"
+      description: "Makes final trading decisions with risk management"
     }
   ]);
   
@@ -92,7 +108,7 @@ const Playground = () => {
       id: "welcome",
       type: "agent",
       content: "Welcome to Industry Agent! I can help you analyze stocks, create visualizations, screen securities, and execute trades. Try asking me to plot a chart, screen stocks, or get recommendations.",
-      agentName: "Orchestrator Agent",
+      agentName: "Trading Coordinator",
       timestamp: new Date().toLocaleTimeString()
     }
   ]);
@@ -120,9 +136,9 @@ const Playground = () => {
     setQuery("");
     setIsTyping(true);
 
-    // Update orchestrator status
+    // Update coordinator status
     setAgents(prev => prev.map(agent => 
-      agent.id === "orchestrator" 
+      agent.id === "coordinator" 
         ? { ...agent, status: "processing" }
         : agent
     ));
@@ -167,7 +183,7 @@ const Playground = () => {
       setAgents(prev => prev.map(agent => 
         agent.id === agentId 
           ? { ...agent, status: "processing" }
-          : agent.id === "orchestrator" && agentId !== "orchestrator"
+          : agent.id === "coordinator" && agentId !== "coordinator"
           ? { ...agent, status: "completed" }
           : agent
       ));
@@ -178,7 +194,8 @@ const Playground = () => {
         type: "agent",
         content: data.message,
         agentName: data.agent_name,
-        interactive: data.data ? createInteractiveComponent(data.data, data.agent_name) : undefined,
+        interactive: data.trading_analysis ? createInteractiveComponent(data.trading_analysis, data.agent_name) : 
+                    data.data ? createInteractiveComponent(data.data, data.agent_name) : undefined,
         timestamp: new Date().toLocaleTimeString()
       };
 
@@ -205,9 +222,9 @@ const Playground = () => {
 
       setMessages(prev => [...prev, errorMessage]);
       
-      // Reset orchestrator status
+      // Reset coordinator status
       setAgents(prev => prev.map(agent => 
-        agent.id === "orchestrator" 
+        agent.id === "coordinator" 
           ? { ...agent, status: "completed" }
           : agent
       ));
@@ -217,285 +234,27 @@ const Playground = () => {
   };
 
   const getAgentIdFromName = (agentName: string): string => {
-    if (agentName.toLowerCase().includes('screener')) return 'screener';
-    if (agentName.toLowerCase().includes('visualizer')) return 'visualizer';
-    if (agentName.toLowerCase().includes('recommender')) return 'recommender';
-    if (agentName.toLowerCase().includes('buy')) return 'buy';
-    if (agentName.toLowerCase().includes('sell')) return 'sell';
-    return 'orchestrator';
+    if (agentName.toLowerCase().includes('ticker')) return 'ticker';
+    if (agentName.toLowerCase().includes('fundamentals')) return 'fundamentals';
+    if (agentName.toLowerCase().includes('technical')) return 'technical';
+    if (agentName.toLowerCase().includes('sentiment')) return 'sentiment';
+    if (agentName.toLowerCase().includes('news')) return 'news';
+    if (agentName.toLowerCase().includes('research')) return 'research';
+    if (agentName.toLowerCase().includes('trader')) return 'trader';
+    return 'coordinator';
   };
 
-  const createInteractiveComponent = (stockData: any[], agentName: string) => {
-    if (agentName.toLowerCase().includes('screener') && stockData) {
-      return <ScreenerResponseWithData stockData={stockData} onNext={() => triggerRecommender()} />;
+  const createInteractiveComponent = (data: any, agentName: string) => {
+    // Handle trading analysis data (single object with workflow_id property)
+    if (data && typeof data === 'object' && 'workflow_id' in data) {
+      return <TradingAnalysisDisplay data={data} />;
     }
-    // Add other interactive components as needed
+    // Handle stock data arrays - add other components as needed
+    if (Array.isArray(data)) {
+      // Future: add components for stock screening results
+      return null;
+    }
     return null;
-  };
-
-  // Custom ScreenerResponse component that uses actual API data
-  const ScreenerResponseWithData = ({ stockData, onNext }: { stockData: any[], onNext: () => void }) => (
-    <Card className="bg-card-glass/50 border border-accent/20">
-      <CardContent className="p-4 space-y-3">
-        <p className="text-sm font-medium">Screened Stocks</p>
-        <div className="space-y-2">
-          {stockData.map((stock, i) => (
-            <div key={stock.ticker || i} className="flex justify-between items-center p-3 rounded bg-card-glass/30 border border-border/10">
-              <div>
-                <span className="text-sm font-medium">{stock.ticker} - {stock.name}</span>
-                <p className="text-xs text-muted-foreground">Performance: {stock.performance}</p>
-              </div>
-              <Badge variant={i < 2 ? "default" : "secondary"}>
-                {stock.performance}
-              </Badge>
-            </div>
-          ))}
-        </div>
-        <Button 
-          size="sm" 
-          variant="secondary"
-          onClick={onNext}
-          className="w-full"
-        >
-          Get Buy/Sell Recommendations <ArrowRight className="h-4 w-4 ml-1" />
-        </Button>
-      </CardContent>
-    </Card>
-  );
-
-  const startVisualizationWorkflow = (query: string) => {
-    // Activate visualizer
-    setAgents(prev => prev.map(agent => 
-      agent.id === "visualizer" 
-        ? { ...agent, status: "processing" }
-        : agent.id === "orchestrator"
-        ? { ...agent, status: "completed" }
-        : agent
-    ));
-
-    setTimeout(() => {
-      const agentMessage: Message = {
-        id: Date.now().toString(),
-        type: "agent",
-        content: "I've analyzed the request and created a performance chart for Tata Motors. The data shows strong quarterly growth.",
-        agentName: "Visualizer Agent",
-        interactive: (
-          <VisualizerResponse onNext={() => triggerScreener()} />
-        ),
-        timestamp: new Date().toLocaleTimeString()
-      };
-
-      setMessages(prev => [...prev, agentMessage]);
-      
-      setAgents(prev => prev.map(agent => 
-        agent.id === "visualizer" 
-          ? { ...agent, status: "completed" }
-          : agent
-      ));
-      
-      setIsTyping(false);
-    }, 2000);
-  };
-
-  const triggerScreener = () => {
-    setIsTyping(true);
-    setAgents(prev => prev.map(agent => 
-      agent.id === "screener" 
-        ? { ...agent, status: "processing" }
-        : agent
-    ));
-
-    setTimeout(() => {
-      const agentMessage: Message = {
-        id: Date.now().toString(),
-        type: "agent",
-        content: "I've identified the top 5 performers in the automotive sector. These stocks show strong momentum and volume.",
-        agentName: "Screener Agent",
-        interactive: (
-          <ScreenerResponse onNext={() => triggerRecommender()} />
-        ),
-        timestamp: new Date().toLocaleTimeString()
-      };
-
-      setMessages(prev => [...prev, agentMessage]);
-      
-      setAgents(prev => prev.map(agent => 
-        agent.id === "screener" 
-          ? { ...agent, status: "completed" }
-          : agent
-      ));
-      
-      setIsTyping(false);
-    }, 1500);
-  };
-
-  const triggerRecommender = () => {
-    setIsTyping(true);
-    setAgents(prev => prev.map(agent => 
-      agent.id === "recommender" 
-        ? { ...agent, status: "processing" }
-        : agent
-    ));
-
-    setTimeout(() => {
-      const agentMessage: Message = {
-        id: Date.now().toString(),
-        type: "agent",
-        content: "Based on technical analysis, I've generated buy/sell recommendations. The signals are based on RSI, MACD, and trend analysis.",
-        agentName: "Recommender Agent",
-        interactive: (
-          <RecommenderResponse onNext={() => executeTrade()} />
-        ),
-        timestamp: new Date().toLocaleTimeString()
-      };
-
-      setMessages(prev => [...prev, agentMessage]);
-      
-      setAgents(prev => prev.map(agent => 
-        agent.id === "recommender" 
-          ? { ...agent, status: "completed" }
-          : agent
-      ));
-      
-      setIsTyping(false);
-    }, 2000);
-  };
-
-  const executeTrade = () => {
-    setIsTyping(true);
-    setAgents(prev => prev.map(agent => 
-      agent.id === "buy" 
-        ? { ...agent, status: "processing" }
-        : agent
-    ));
-
-    setTimeout(() => {
-      const agentMessage: Message = {
-        id: Date.now().toString(),
-        type: "agent",
-        content: "Trade execution completed successfully. Your portfolio has been updated with the new positions.",
-        agentName: "Buy Agent",
-        interactive: (
-          <TradingResponse type="buy" stocks={["Tata Motors - 50 shares at ₹485", "Mahindra - 20 shares at ₹1,245"]} />
-        ),
-        timestamp: new Date().toLocaleTimeString()
-      };
-
-      setMessages(prev => [...prev, agentMessage]);
-      
-      setAgents(prev => prev.map(agent => 
-        agent.id === "buy" 
-          ? { ...agent, status: "completed" }
-          : agent
-      ));
-      
-      setIsTyping(false);
-    }, 1500);
-  };
-
-  const startScreeningWorkflow = (query: string) => {
-    setAgents(prev => prev.map(agent => 
-      agent.id === "screener" 
-        ? { ...agent, status: "processing" }
-        : agent.id === "orchestrator"
-        ? { ...agent, status: "completed" }
-        : agent
-    ));
-
-    setTimeout(() => {
-      const agentMessage: Message = {
-        id: Date.now().toString(),
-        type: "agent",
-        content: "I've screened the market based on your criteria. Here are the top performers with strong fundamentals and technical indicators.",
-        agentName: "Screener Agent",
-        interactive: (
-          <ScreenerResponse onNext={() => triggerRecommender()} />
-        ),
-        timestamp: new Date().toLocaleTimeString()
-      };
-
-      setMessages(prev => [...prev, agentMessage]);
-      
-      setAgents(prev => prev.map(agent => 
-        agent.id === "screener" 
-          ? { ...agent, status: "completed" }
-          : agent
-      ));
-      
-      setIsTyping(false);
-    }, 2000);
-  };
-
-  const startRecommendationWorkflow = (query: string) => {
-    setAgents(prev => prev.map(agent => 
-      agent.id === "recommender" 
-        ? { ...agent, status: "processing" }
-        : agent.id === "orchestrator"
-        ? { ...agent, status: "completed" }
-        : agent
-    ));
-
-    setTimeout(() => {
-      const agentMessage: Message = {
-        id: Date.now().toString(),
-        type: "agent",
-        content: "I've analyzed the requested securities and generated comprehensive recommendations based on multiple technical indicators.",
-        agentName: "Recommender Agent",
-        interactive: (
-          <RecommenderResponse onNext={() => executeTrade()} />
-        ),
-        timestamp: new Date().toLocaleTimeString()
-      };
-
-      setMessages(prev => [...prev, agentMessage]);
-      
-      setAgents(prev => prev.map(agent => 
-        agent.id === "recommender" 
-          ? { ...agent, status: "completed" }
-          : agent
-      ));
-      
-      setIsTyping(false);
-    }, 2000);
-  };
-
-  const startDirectTradingWorkflow = (query: string) => {
-    const isBuy = query.toLowerCase().includes("buy");
-    const agentId = isBuy ? "buy" : "sell";
-    
-    setAgents(prev => prev.map(agent => 
-      agent.id === agentId 
-        ? { ...agent, status: "processing" }
-        : agent.id === "orchestrator"
-        ? { ...agent, status: "completed" }
-        : agent
-    ));
-
-    setTimeout(() => {
-      const agentMessage: Message = {
-        id: Date.now().toString(),
-        type: "agent",
-        content: `I've executed your ${isBuy ? "purchase" : "sale"} order successfully. The transaction has been completed and your portfolio updated.`,
-        agentName: `${isBuy ? "Buy" : "Sell"} Agent`,
-        interactive: (
-          <TradingResponse 
-            type={isBuy ? "buy" : "sell"} 
-            stocks={[`RELIANCE - 25 shares at ₹${isBuy ? "2,450" : "2,475"}`]} 
-          />
-        ),
-        timestamp: new Date().toLocaleTimeString()
-      };
-
-      setMessages(prev => [...prev, agentMessage]);
-      
-      setAgents(prev => prev.map(agent => 
-        agent.id === agentId 
-          ? { ...agent, status: "completed" }
-          : agent
-      ));
-      
-      setIsTyping(false);
-    }, 1500);
   };
 
   return (
