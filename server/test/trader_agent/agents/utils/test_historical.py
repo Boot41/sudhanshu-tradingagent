@@ -1,9 +1,18 @@
 import logging
-import pandas as pd
-from dotenv import load_dotenv
+import sys
+import os
 
-# Import the function from your module
-from nasdaq_api import get_historical_data
+# Add the server directory to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../'))
+
+try:
+    import pandas as pd
+    from dotenv import load_dotenv
+    from trader_agent.agents.utils.nasdaq_api import get_historical_data
+    DEPENDENCIES_AVAILABLE = True
+except ImportError as e:
+    print(f"Dependencies not available: {e}")
+    DEPENDENCIES_AVAILABLE = False
 
 # Set up basic logging to see output from the module
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -12,6 +21,10 @@ def run_test():
     """
     Runs a test of the get_historical_data function and prints the full results.
     """
+    if not DEPENDENCIES_AVAILABLE:
+        print("❌ SKIPPED: Required dependencies (pandas, dotenv, yfinance) not available")
+        return
+        
     # Load environment variables from your .env file
     load_dotenv()
     

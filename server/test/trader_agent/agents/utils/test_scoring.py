@@ -4,9 +4,11 @@ Test script for scoring module functionality.
 
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from scoring import (
+# Add the server directory to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../'))
+
+from trader_agent.agents.utils.scoring import (
     fundamentals_score, 
     technical_score, 
     sentiment_score, 

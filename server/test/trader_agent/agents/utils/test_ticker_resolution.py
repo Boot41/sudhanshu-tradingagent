@@ -11,10 +11,10 @@ import os
 import logging
 from typing import List, Tuple
 
-# Add the current directory to Python path so we can import nasdaq_api
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add the server directory to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../'))
 
-from nasdaq_api import resolve_ticker
+from trader_agent.agents.utils.nasdaq_api import resolve_ticker
 
 # Configure logging to see detailed output
 logging.basicConfig(
