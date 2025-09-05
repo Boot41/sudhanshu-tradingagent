@@ -20,6 +20,8 @@ interface Message {
   content: string;
   agentName?: string;
   interactive?: React.ReactNode;
+  interactiveData?: any;
+  interactiveType?: string;
   timestamp: string;
 }
 
@@ -39,79 +41,177 @@ const Playground = () => {
   
   const { logout } = useAuthStore();
 
+  // Storage keys for persistence
+  const CHAT_MESSAGES_KEY = 'tradingagent_chat_messages';
+  const AGENT_STATES_KEY = 'tradingagent_agent_states';
+
+  // Save messages to localStorage whenever messages change
+  const saveMessagesToStorage = (messages: Message[]) => {
+    try {
+      // Create serializable version by excluding React components
+      const serializableMessages = messages.map(msg => ({
+        id: msg.id,
+        type: msg.type,
+        content: msg.content,
+        agentName: msg.agentName,
+        interactiveData: msg.interactiveData,
+        interactiveType: msg.interactiveType,
+        timestamp: msg.timestamp
+      }));
+      localStorage.setItem(CHAT_MESSAGES_KEY, JSON.stringify(serializableMessages));
+    } catch (error) {
+      console.warn('Failed to save messages to localStorage:', error);
+    }
+  };
+
+  // Save agent states to localStorage whenever agents change
+  const saveAgentsToStorage = (agents: Agent[]) => {
+    try {
+      localStorage.setItem(AGENT_STATES_KEY, JSON.stringify(agents));
+    } catch (error) {
+      console.warn('Failed to save agents to localStorage:', error);
+    }
+  };
+
+  // Load messages from localStorage
+  const loadMessagesFromStorage = (): Message[] => {
+    try {
+      const stored = localStorage.getItem(CHAT_MESSAGES_KEY);
+      if (stored) {
+        const parsedMessages = JSON.parse(stored);
+        // Validate that it's an array and has the expected structure
+        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          // Reconstruct messages with interactive components
+          return parsedMessages.map(msg => ({
+            ...msg,
+            interactive: msg.interactiveType ? reconstructInteractiveComponent(msg) : undefined
+          }));
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load messages from localStorage:', error);
+    }
+    
+    // Return default welcome message if no stored messages or error
+    return [
+      {
+        id: "welcome",
+        type: "agent",
+        content: "Hello! I'm Marcus Wellington, your AI Trading Strategist. I specialize in comprehensive market analysis, risk assessment, and trading recommendations. I can analyze any stock using advanced technical indicators, fundamental analysis, sentiment tracking, and news impact assessment. What company would you like me to analyze today?",
+        agentName: "Marcus Wellington",
+        timestamp: new Date().toLocaleTimeString()
+      }
+    ];
+  };
+
+  // Load agent states from localStorage
+  const loadAgentsFromStorage = (): Agent[] => {
+    try {
+      const stored = localStorage.getItem(AGENT_STATES_KEY);
+      if (stored) {
+        const parsedAgents = JSON.parse(stored);
+        if (Array.isArray(parsedAgents) && parsedAgents.length > 0) {
+          return parsedAgents;
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load agents from localStorage:', error);
+    }
+    
+    // Return default agent configuration if no stored states or error
+    return [
+      {
+        id: "coordinator",
+        name: "Marcus Wellington",
+        icon: Brain,
+        status: "idle",
+        description: "Senior Trading Strategist with 15+ years experience in quantitative analysis and portfolio management"
+      },
+      {
+        id: "ticker",
+        name: "Ticker Agent",
+        icon: Target,
+        status: "idle",
+        description: "Validates and resolves company names to tickers"
+      },
+      {
+        id: "fundamentals",
+        name: "Fundamentals Agent",
+        icon: BarChart3,
+        status: "idle",
+        description: "Analyzes company financials and ratios"
+      },
+      {
+        id: "technical",
+        name: "Technical Agent",
+        icon: TrendingUp,
+        status: "idle",
+        description: "Calculates technical indicators and trends"
+      },
+      {
+        id: "sentiment",
+        name: "Sentiment Agent",
+        icon: Users,
+        status: "idle",
+        description: "Analyzes news sentiment and market mood"
+      },
+      {
+        id: "news",
+        name: "News Agent",
+        icon: Newspaper,
+        status: "idle",
+        description: "Evaluates news events and market impact"
+      },
+      {
+        id: "research",
+        name: "Research Manager",
+        icon: FileText,
+        status: "idle",
+        description: "Synthesizes bull/bear research perspectives"
+      },
+      {
+        id: "trader",
+        name: "Trader Agent",
+        icon: DollarSign,
+        status: "idle",
+        description: "Makes final trading decisions with risk management"
+      }
+    ];
+  };
+
+  const reconstructInteractiveComponent = (message: Message) => {
+    if (message.interactiveType === 'trading-analysis') {
+      return <TradingAnalysisDisplay data={message.interactiveData} />;
+    }
+    // Handle stock data arrays - add other components as needed
+    if (message.interactiveType === 'data') {
+      // Future: add components for stock screening results
+      return null;
+    }
+    return null;
+  };
+
   const handleLogout = async () => {
+    // Clear chat history from localStorage on logout
+    localStorage.removeItem(CHAT_MESSAGES_KEY);
+    localStorage.removeItem(AGENT_STATES_KEY);
     await logout();
     navigate("/");
   };
   
-  const [agents, setAgents] = useState<Agent[]>([
-    {
-      id: "coordinator",
-      name: "Marcus Wellington",
-      icon: Brain,
-      status: "idle",
-      description: "Senior Trading Strategist with 15+ years experience in quantitative analysis and portfolio management"
-    },
-    {
-      id: "ticker",
-      name: "Ticker Agent",
-      icon: Target,
-      status: "idle",
-      description: "Validates and resolves company names to tickers"
-    },
-    {
-      id: "fundamentals",
-      name: "Fundamentals Agent",
-      icon: BarChart3,
-      status: "idle",
-      description: "Analyzes company financials and ratios"
-    },
-    {
-      id: "technical",
-      name: "Technical Agent",
-      icon: TrendingUp,
-      status: "idle",
-      description: "Calculates technical indicators and trends"
-    },
-    {
-      id: "sentiment",
-      name: "Sentiment Agent",
-      icon: Users,
-      status: "idle",
-      description: "Analyzes news sentiment and market mood"
-    },
-    {
-      id: "news",
-      name: "News Agent",
-      icon: Newspaper,
-      status: "idle",
-      description: "Evaluates news events and market impact"
-    },
-    {
-      id: "research",
-      name: "Research Manager",
-      icon: FileText,
-      status: "idle",
-      description: "Synthesizes bull/bear research perspectives"
-    },
-    {
-      id: "trader",
-      name: "Trader Agent",
-      icon: DollarSign,
-      status: "idle",
-      description: "Makes final trading decisions with risk management"
-    }
-  ]);
+  const [agents, setAgents] = useState<Agent[]>(() => loadAgentsFromStorage());
   
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      type: "agent",
-      content: "Hello! I'm Marcus Wellington, your AI Trading Strategist. I specialize in comprehensive market analysis, risk assessment, and trading recommendations. I can analyze any stock using advanced technical indicators, fundamental analysis, sentiment tracking, and news impact assessment. What company would you like me to analyze today?",
-      agentName: "Marcus Wellington",
-      timestamp: new Date().toLocaleTimeString()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => loadMessagesFromStorage());
+
+  // Effect to save messages to localStorage whenever messages change
+  useEffect(() => {
+    saveMessagesToStorage(messages);
+  }, [messages]);
+
+  // Effect to save agents to localStorage whenever agents change
+  useEffect(() => {
+    saveAgentsToStorage(agents);
+  }, [agents]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -194,8 +294,10 @@ const Playground = () => {
         type: "agent",
         content: data.message,
         agentName: data.agent_name,
-        interactive: data.trading_analysis ? createInteractiveComponent(data.trading_analysis, data.agent_name) : 
-                    data.data ? createInteractiveComponent(data.data, data.agent_name) : undefined,
+        interactiveData: data.trading_analysis ? data.trading_analysis : data.data,
+        interactiveType: data.trading_analysis ? 'trading-analysis' : data.data ? 'data' : undefined,
+        interactive: data.trading_analysis ? reconstructInteractiveComponent({ interactiveType: 'trading-analysis', interactiveData: data.trading_analysis } as Message) : 
+                    data.data ? reconstructInteractiveComponent({ interactiveType: 'data', interactiveData: data.data } as Message) : undefined,
         timestamp: new Date().toLocaleTimeString()
       };
 
@@ -242,19 +344,6 @@ const Playground = () => {
     if (agentName.toLowerCase().includes('research')) return 'research';
     if (agentName.toLowerCase().includes('trader')) return 'trader';
     return 'coordinator';
-  };
-
-  const createInteractiveComponent = (data: any, agentName: string) => {
-    // Handle trading analysis data (single object with workflow_id property)
-    if (data && typeof data === 'object' && 'workflow_id' in data) {
-      return <TradingAnalysisDisplay data={data} />;
-    }
-    // Handle stock data arrays - add other components as needed
-    if (Array.isArray(data)) {
-      // Future: add components for stock screening results
-      return null;
-    }
-    return null;
   };
 
   return (
@@ -314,8 +403,8 @@ const Playground = () => {
                         </div>
                         <p className="text-base text-muted-foreground leading-relaxed">
                           No time for lengthy analysis? Just type <strong>one company name</strong> and our AI agents handle the rest. 
-                          Get comprehensive trading insights in seconds, not minutes. Our advanced system analyzes both 
-                          <strong> NYSE and NASDAQ</strong> listed companies with institutional-grade precision.
+                          Get comprehensive trading insights in seconds, not minutes. Our advanced system analyzes 
+                          <strong> NASDAQ</strong> listed companies with institutional-grade precision.
                         </p>
                         
                         <div className="grid grid-cols-2 gap-6 py-2">
@@ -324,7 +413,7 @@ const Playground = () => {
                             <div className="space-y-2 text-sm">
                               <div className="flex items-center gap-2">
                                 <ArrowRight className="h-4 w-4 text-primary" />
-                                <span>NYSE & NASDAQ stocks</span>
+                                <span>NASDAQ stocks</span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <ArrowRight className="h-4 w-4 text-primary" />
@@ -361,14 +450,10 @@ const Playground = () => {
                             <h4 className="text-base font-medium">Try These Examples</h4>
                             <Badge variant="outline" className="text-xs">Instant Results</Badge>
                           </div>
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div>
-                              <p className="text-muted-foreground mb-1">NYSE Giants:</p>
-                              <p className="text-primary font-medium">"Berkshire" • "JPM" • "JNJ"</p>
-                            </div>
+                          <div className="grid grid-cols-1 gap-3 text-sm">
                             <div>
                               <p className="text-muted-foreground mb-1">NASDAQ Leaders:</p>
-                              <p className="text-primary font-medium">"AAPL" • "Tesla" • "NVDA"</p>
+                              <p className="text-primary font-medium">"Apple" • "Tesla" • "Nvidia"</p>
                             </div>
                           </div>
                         </div>

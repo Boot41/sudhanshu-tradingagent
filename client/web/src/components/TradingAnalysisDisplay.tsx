@@ -66,9 +66,9 @@ export const TradingAnalysisDisplay: React.FC<TradingAnalysisDisplayProps> = ({ 
 
   const getStanceColor = (stance: string) => {
     switch (stance.toLowerCase()) {
-      case 'bullish': return 'text-green-600';
-      case 'bearish': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'bullish': return 'text-green-600 bg-white border-green-200';
+      case 'bearish': return 'text-red-600 bg-white border-red-200';
+      default: return 'text-black bg-white border-gray-200';
     }
   };
 
