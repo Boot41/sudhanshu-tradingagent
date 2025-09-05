@@ -47,10 +47,10 @@ const Playground = () => {
   const [agents, setAgents] = useState<Agent[]>([
     {
       id: "coordinator",
-      name: "Trading Coordinator",
+      name: "Marcus Wellington",
       icon: Brain,
       status: "idle",
-      description: "Orchestrates complete trading analysis workflow"
+      description: "Senior Trading Strategist with 15+ years experience in quantitative analysis and portfolio management"
     },
     {
       id: "ticker",
@@ -107,8 +107,8 @@ const Playground = () => {
     {
       id: "welcome",
       type: "agent",
-      content: "Welcome to Industry Agent! I can help you analyze stocks, create visualizations, screen securities, and execute trades. Try asking me to plot a chart, screen stocks, or get recommendations.",
-      agentName: "Trading Coordinator",
+      content: "Hello! I'm Marcus Wellington, your AI Trading Strategist. I specialize in comprehensive market analysis, risk assessment, and trading recommendations. I can analyze any stock using advanced technical indicators, fundamental analysis, sentiment tracking, and news impact assessment. What company would you like me to analyze today?",
+      agentName: "Marcus Wellington",
       timestamp: new Date().toLocaleTimeString()
     }
   ]);
@@ -265,8 +265,8 @@ const Playground = () => {
           <div className="flex items-center gap-3">
             <Brain className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-xl font-bold">Industry Agent</h1>
-              <p className="text-sm text-muted-foreground">AI Trading Platform</p>
+              <h1 className="text-2xl font-bold">TradingAgent Pro</h1>
+              <p className="text-base text-muted-foreground">AI-Powered Trading Analysis Platform</p>
             </div>
           </div>
           <Button
@@ -300,9 +300,9 @@ const Playground = () => {
               {isTyping && (
                 <div className="flex justify-start">
                   <div className="max-w-[85%] space-y-2">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Sparkles className="h-4 w-4 animate-spin" />
-                      <span>AI is thinking...</span>
+                      <span>Marcus is analyzing the market...</span>
                     </div>
                     <div className="bg-card-glass/80 backdrop-blur-sm border border-border/20 p-4 rounded-2xl rounded-tl-md shadow-glass">
                       <div className="flex gap-1">
@@ -326,8 +326,8 @@ const Playground = () => {
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Ask me to plot charts, screen stocks, or make trading decisions..."
-                  className="flex-1 bg-card-glass/50 border-border/20 text-base h-12"
+                  placeholder="Enter a company name or ticker symbol for comprehensive trading analysis..."
+                  className="flex-1 bg-card-glass/50 border-border/20 text-lg h-14"
                   disabled={isTyping}
                 />
                 <Button 

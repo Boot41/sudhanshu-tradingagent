@@ -16,15 +16,15 @@ export const ChatMessage = ({ type, content, agentName, interactive, timestamp }
     return (
       <div className="flex justify-end mb-6">
         <div className="max-w-[80%] space-y-2">
-          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
             <span>You</span>
             <User className="h-4 w-4" />
           </div>
           <div className="bg-primary text-primary-foreground p-4 rounded-2xl rounded-tr-md">
-            <p className="text-sm leading-relaxed">{content}</p>
+            <p className="text-base leading-relaxed">{content}</p>
           </div>
           {timestamp && (
-            <p className="text-xs text-muted-foreground text-right">{timestamp}</p>
+            <p className="text-sm text-muted-foreground text-right">{timestamp}</p>
           )}
         </div>
       </div>
@@ -34,12 +34,12 @@ export const ChatMessage = ({ type, content, agentName, interactive, timestamp }
   return (
     <div className="flex justify-start mb-6">
       <div className="max-w-[85%] space-y-2">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Brain className="h-4 w-4" />
           <span>{agentName || "AI Agent"}</span>
         </div>
         <div className="bg-card-glass/80 backdrop-blur-sm border border-border/20 p-4 rounded-2xl rounded-tl-md shadow-glass">
-          <p className="text-sm leading-relaxed mb-3">{content}</p>
+          <p className="text-base leading-relaxed mb-3">{content}</p>
           {interactive && (
             <div className="mt-4">
               {interactive}
@@ -47,7 +47,7 @@ export const ChatMessage = ({ type, content, agentName, interactive, timestamp }
           )}
         </div>
         {timestamp && (
-          <p className="text-xs text-muted-foreground">{timestamp}</p>
+          <p className="text-sm text-muted-foreground">{timestamp}</p>
         )}
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Eye, Filter, Target, ShoppingCart, DollarSign } from "lucide-react";
+import { Brain, Eye, Filter, Target, ShoppingCart, DollarSign, ArrowDown, BarChart3, TrendingUp, Newspaper, Users } from "lucide-react";
 
 interface Agent {
   id: string;
@@ -32,57 +32,106 @@ export const AgentSidebar = ({ agents }: AgentSidebarProps) => {
   };
 
   return (
-    <div className="w-80 border-l border-border/20 bg-card-glass/30 backdrop-blur-sm">
-      <div className="p-6 border-b border-border/20">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Brain className="h-5 w-5 text-primary" />
-          AI Agents
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Specialized trading intelligence
-        </p>
-      </div>
-      
-      <div className="p-6 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
-        {agents.map((agent) => {
-          const Icon = agent.icon;
-          return (
-            <Card key={agent.id} className="bg-card-glass/50 border border-border/10 hover:bg-card-glass/70 transition-all duration-200">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-card-glass/50">
-                      <Icon className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-sm">{agent.name}</CardTitle>
-                    </div>
-                  </div>
-                  <Badge
-                    className={`h-2 w-2 rounded-full p-0 ${getStatusColor(agent.status)}`}
-                    aria-label={`Status: ${agent.status}`}
-                  />
+    <div className="w-100 border-l border-border/20 bg-card-glass/30 backdrop-blur-sm h-full">
+      {/* What We Deliver - Main Section */}
+      <div className="p-6 h-full overflow-y-auto">
+        <div className="p-6 rounded-lg bg-gradient-to-b from-primary/10 to-primary/5 border border-primary/20">
+          <h2 className="text-lg font-bold mb-6 text-center">What We Deliver</h2>
+          
+          <div className="space-y-4">
+            {/* User Input */}
+            <div className="flex items-center justify-center gap-4 p-3 rounded-lg bg-card-glass/30">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
+              <div className="mr-10 min-w-0 ">
+                <p className="text-sm font-semibold">Name any company</p>
+                <p className="text-sm text-muted-foreground">We handle the rest</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <ArrowDown className="h-5 w-5 text-muted-foreground" />
+            </div>
+            
+            {/* Comprehensive Analysis */}
+            <div className="p-4 rounded-lg bg-card-glass/40 border border-border/10">
+              <p className="text-sm font-semibold mb-3 text-center">Comprehensive Analysis</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-2 p-2 rounded bg-card-glass/30">
+                  <BarChart3 className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm">Financial Health</span>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-xs text-muted-foreground mb-2">{agent.description}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {getStatusText(agent.status)}
-                  </span>
+                <div className="flex items-center gap-2 p-2 rounded bg-card-glass/30">
+                  <TrendingUp className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Price Trends</span>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-        
-        <div className="mt-6 p-4 rounded-lg bg-primary/10 border border-primary/20">
-          <h3 className="text-sm font-medium mb-2">How it works</h3>
-          <div className="space-y-2 text-xs text-muted-foreground">
-            <p>• Ask for charts, analysis, or trading actions</p>
-            <p>• Agents work together automatically</p>
-            <p>• Approve each step before execution</p>
-            <p>• All interactions happen in chat</p>
+                <div className="flex items-center gap-2 p-2 rounded bg-card-glass/30">
+                  <Newspaper className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm">Market News</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded bg-card-glass/30">
+                  <Users className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm">Market Sentiment</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <ArrowDown className="h-5 w-5 text-muted-foreground" />
+            </div>
+            
+            {/* Balanced Perspective */}
+            <div className="flex gap-2">
+              <div className="flex-1 w-[49%] p-1 py-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  {/* <div className="w-5  h-5 rounded-full bg-green-500/30 flex items-center justify-center">
+                    <span className="text-sm">📈</span>
+                  </div> */}
+                  <span className="text-sm font-semibold">Opportunities</span>
+                </div>
+                <p className="text-sm text-muted-foreground">Growth potential</p>
+              </div>
+              <div className="flex-1 w-[49%] p-1 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  {/* <div className="w-5 h-5 rounded-full bg-red-500/30 flex items-center justify-center">
+                    <span className="text-sm">⚠️</span>
+                  </div> */}
+                  <span className="text-sm font-semibold">Risks</span>
+                </div>
+                <p className="text-sm text-muted-foreground">Potential concerns</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <ArrowDown className="h-5 w-5 text-muted-foreground" />
+            </div>
+            
+            {/* Smart Recommendation */}
+            <div className="flex items-center gap-4 p-3 rounded-lg bg-card-glass/30">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <Brain className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold">Smart Recommendation</p>
+                <p className="text-sm text-muted-foreground">Balanced final assessment</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <ArrowDown className="h-5 w-5 text-muted-foreground" />
+            </div>
+            
+            {/* Trading Decision */}
+            <div className="flex items-center gap-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
+              <div className="w-10 h-10 rounded-full bg-primary/30 flex items-center justify-center flex-shrink-0">
+                <DollarSign className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold">Clear Trading Signal</p>
+                <p className="text-sm text-muted-foreground font-medium">BUY • SELL • HOLD</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
