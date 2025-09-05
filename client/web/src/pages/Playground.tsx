@@ -297,6 +297,87 @@ const Playground = () => {
                 />
               ))}
               
+              {/* One-Word Analysis Feature Banner - Show only after welcome message */}
+              {messages.length === 1 && (
+                <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20 shadow-lg">
+                  <CardContent className="p-8">
+                    <div className="flex items-start gap-6">
+                      <div className="flex-shrink-0">
+                        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Sparkles className="h-8 w-8 text-primary" />
+                        </div>
+                      </div>
+                      <div className="flex-1 space-y-4">
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-xl font-semibold">Lightning-Fast Analysis</h3>
+                          <Badge variant="secondary" className="text-xs">PREMIUM</Badge>
+                        </div>
+                        <p className="text-base text-muted-foreground leading-relaxed">
+                          No time for lengthy analysis? Just type <strong>one company name</strong> and our AI agents handle the rest. 
+                          Get comprehensive trading insights in seconds, not minutes. Our advanced system analyzes both 
+                          <strong> NYSE and NASDAQ</strong> listed companies with institutional-grade precision.
+                        </p>
+                        
+                        <div className="grid grid-cols-2 gap-6 py-2">
+                          <div className="space-y-3">
+                            <h4 className="text-base font-medium text-foreground">Market Coverage</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center gap-2">
+                                <ArrowRight className="h-4 w-4 text-primary" />
+                                <span>NYSE & NASDAQ stocks</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <ArrowRight className="h-4 w-4 text-primary" />
+                                <span>Real-time ticker resolution</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <ArrowRight className="h-4 w-4 text-primary" />
+                                <span>Multi-cap analysis (Large, Mid, Small)</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <h4 className="text-base font-medium text-foreground">Analysis Depth</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center gap-2">
+                                <ArrowRight className="h-4 w-4 text-primary" />
+                                <span>6-layer AI workflow</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <ArrowRight className="h-4 w-4 text-primary" />
+                                <span>Technical & fundamental scores</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <ArrowRight className="h-4 w-4 text-primary" />
+                                <span>Sentiment & news impact</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-card/50 rounded-lg p-4 border border-border/10">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-base font-medium">Try These Examples</h4>
+                            <Badge variant="outline" className="text-xs">Instant Results</Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="text-muted-foreground mb-1">NYSE Giants:</p>
+                              <p className="text-primary font-medium">"Berkshire" • "JPM" • "JNJ"</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground mb-1">NASDAQ Leaders:</p>
+                              <p className="text-primary font-medium">"AAPL" • "Tesla" • "NVDA"</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
               {isTyping && (
                 <div className="flex justify-start">
                   <div className="max-w-[85%] space-y-2">
