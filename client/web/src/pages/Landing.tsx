@@ -54,36 +54,40 @@ const Landing = () => {
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-4">
               <h1 className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Industry Agent
+                TradingAgent Pro
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                AI-powered trading platform with intelligent agents for visualization, screening, 
-                recommendations, and automated trading decisions.
+                AI-Powered Trading Analysis Platform with Multi-Agent Intelligence. Experience institutional-grade trading analysis through our advanced 6-layer AI workflow.
               </p>
             </div>
 
-            {/* Agent Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {[
-                { icon: Eye, name: "Visualizer", desc: "Charts & graphs" },
-                { icon: Filter, name: "Screener", desc: "Stock filtering" },
-                { icon: Target, name: "Recommender", desc: "Buy/sell signals" },
-                { icon: ShoppingCart, name: "Buy Agent", desc: "Purchase execution" },
-                { icon: DollarSign, name: "Sell Agent", desc: "Sale execution" },
-                { icon: Brain, name: "Orchestrator", desc: "AI coordination" }
-              ].map((agent, index) => (
-                <div 
-                  key={agent.name}
-                  className="p-4 rounded-lg bg-card-glass/30 backdrop-blur-sm border border-border/20 text-center space-y-2 hover:bg-card-glass/50 transition-all duration-300"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <agent.icon className="h-6 w-6 text-primary mx-auto" />
-                  <div>
-                    <p className="font-medium text-sm">{agent.name}</p>
-                    <p className="text-xs text-muted-foreground">{agent.desc}</p>
+            {/* Meet Your AI Trading Team */}
+            <div className="space-y-4">
+              <h3 className="text-2xl font-semibold">Meet Your AI Trading Team</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { icon: Brain, name: "Marcus Wellington", desc: "Senior Trading Strategist" },
+                  { icon: Target, name: "Ticker Agent", desc: "Company validation" },
+                  { icon: BarChart3, name: "Fundamentals", desc: "Financial analysis" },
+                  { icon: TrendingUp, name: "Technical", desc: "Chart patterns" },
+                  { icon: Eye, name: "Sentiment", desc: "Market mood" },
+                  { icon: Filter, name: "News Agent", desc: "Event impact" },
+                  { icon: ShoppingCart, name: "Research Manager", desc: "Bull/bear synthesis" },
+                  { icon: DollarSign, name: "Trader Agent", desc: "Final decisions" }
+                ].map((agent, index) => (
+                  <div 
+                    key={agent.name}
+                    className="p-4 rounded-lg bg-card-glass/30 backdrop-blur-sm border border-border/20 text-center space-y-2 hover:bg-card-glass/50 transition-all duration-300"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <agent.icon className="h-6 w-6 text-primary mx-auto" />
+                    <div>
+                      <p className="font-medium text-sm">{agent.name}</p>
+                      <p className="text-xs text-muted-foreground">{agent.desc}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             <div className="flex items-center gap-4 p-4 rounded-lg bg-primary/10 border border-primary/20">

@@ -53,6 +53,7 @@ def main():
     
     # List of test files to run
     test_files = [
+        (test_dir / "service" / "test_auth_service.py", "Authentication service tests"),
         (test_dir / "trader_agent" / "agents" / "utils" / "test_indicators.py", "Technical indicators unit tests"),
         (test_dir / "trader_agent" / "agents" / "utils" / "test_scoring.py", "Scoring module tests"),
         (test_dir / "trader_agent" / "agents" / "utils" / "test_historical.py", "Historical data integration test"),
